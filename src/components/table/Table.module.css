@@ -1,0 +1,26 @@
+/* src/components/table/Table.module.css */
+.tableWrapper {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.table th {
+    background: #f9f9f9;
+    cursor: pointer;
+}
+
+.table tr:hover {
+    background: #f5f5f5;
+}
