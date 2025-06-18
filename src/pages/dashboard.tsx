@@ -1,10 +1,8 @@
-import styles from './dashboard.module.css';
-
 export default function DashboardPage() {
     return (
-        <>
-            <h1 className={styles.heading}>Dashboard</h1>
+        <div>
+            <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
             <p>Bu boshqaruv paneli sahifasi.</p>
-        </>
+        </div>
     );
 }

@@ -1,4 +1,3 @@
-// src/components/table/useTable.ts
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
@@ -14,7 +13,11 @@ export interface TableParams<T> {
     pageSize?: number;
 }
 
-export default function useTable<T>({ apiUrl, columns, pageSize = 10 }: TableParams<T>) {
+export default function useTable<T>({
+                                        apiUrl,
+                                        columns,
+                                        pageSize = 10
+                                    }: TableParams<T>) {
     const [data, setData] = useState<T[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -27,19 +30,13 @@ export default function useTable<T>({ apiUrl, columns, pageSize = 10 }: TablePar
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const params: any = {
-                _page: page,
-                _limit: pageSize,
-                q: search,
-                ...filters,
-            };
+            const params: any = { _page: page, _limit: pageSize, q: search, ...filters };
             if (sortKey) {
-                params._sort = sortKey;
+                params._sort  = sortKey;
                 params._order = sortOrder;
             }
             const res = await axios.get<T[]>(apiUrl, { params });
-            // assume API returns X-Total-Count header
-            setTotal(Number(res.headers['x-total-count'] || res.data.length));
+            setTotal(Number(res.headers['x-total-count'] ?? res.data.length));
             setData(res.data);
         } catch (err) {
             console.error(err);
@@ -50,33 +47,20 @@ export default function useTable<T>({ apiUrl, columns, pageSize = 10 }: TablePar
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    // CRUD ops
-    const createItem = async (item: Partial<T>) => {
-        await axios.post(apiUrl, item);
-        fetchData();
-    };
-    const updateItem = async (id: any, item: Partial<T>) => {
-        await axios.put(`${apiUrl}/${id}`, item);
-        fetchData();
-    };
-    const deleteItem = async (id: any) => {
-        await axios.delete(`${apiUrl}/${id}`);
-        fetchData();
-    };
-
-    // handlers
-    const onSearch = (q: string) => { setSearch(q); setPage(1); };
-    const onFilter = (f: Record<string, any>) => { setFilters(f); setPage(1); };
-    const onSort = (key: keyof T) => {
-        if (sortKey === key) setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
-        else { setSortKey(key); setSortOrder('asc'); }
-    };
-    const onPageChange = (p: number) => setPage(p);
+    const createItem = async (item: Partial<T>) => { await axios.post(apiUrl, item); fetchData(); };
+    const updateItem = async (id: any, item: Partial<T>) => { await axios.put(`${apiUrl}/${id}`, item); fetchData(); };
+    const deleteItem = async (id: any) => { await axios.delete(`${apiUrl}/${id}`); fetchData(); };
 
     return {
         data, loading, page, total,
         createItem, updateItem, deleteItem,
-        onSearch, onFilter, onSort, onPageChange,
+        onSearch: (q: string) => { setSearch(q); setPage(1); },
+        onFilter: (f: Record<string, any>) => { setFilters(f); setPage(1); },
+        onSort: (key: keyof T) => {
+            if (sortKey === key) setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+            else { setSortKey(key); setSortOrder('asc'); }
+        },
+        onPageChange: (p: number) => setPage(p),
         sortKey, sortOrder,
     };
 }

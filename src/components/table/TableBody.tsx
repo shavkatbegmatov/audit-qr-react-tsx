@@ -1,7 +1,5 @@
-// src/components/table/TableBody.tsx
-// src/components/table/TableBody.tsx
-import type {Column} from './useTable';
 import TableRow from './TableRow';
+import type { Column } from './useTable';
 
 interface BodyProps<T> {
     data: T[];
@@ -13,18 +11,18 @@ interface BodyProps<T> {
 
 export default function TableBody<T>({ data, columns, onEdit, onDelete, loading }: BodyProps<T>) {
     if (loading) {
-        return <tbody><tr><td colSpan={columns.length+1}>Yuklanmoqda...</td></tr></tbody>;
+        return (
+            <tbody>
+            <tr>
+                <td colSpan={columns.length + 1} className="px-6 py-4 text-center">Yuklanmoqda...</td>
+            </tr>
+            </tbody>
+        );
     }
     return (
-        <tbody>
+        <tbody className="bg-white divide-y divide-gray-200">
         {data.map(item => (
-            <TableRow
-                key={item.id}
-                item={item}
-                columns={columns}
-                onEdit={onEdit}
-                onDelete={onDelete}
-            />
+            <TableRow key={item.id} item={item} columns={columns} onEdit={onEdit} onDelete={onDelete} />
         ))}
         </tbody>
     );

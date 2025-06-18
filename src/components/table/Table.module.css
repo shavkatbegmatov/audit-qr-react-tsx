@@ -1,4 +1,3 @@
-/* src/components/table/Table.module.css */
 .tableWrapper {
     background: white;
     border: 1px solid #ddd;
@@ -11,7 +10,8 @@
     border-collapse: collapse;
 }
 
-.table th, .table td {
+.table th,
+.table td {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #eee;
 }
@@ -23,4 +23,50 @@
 
 .table tr:hover {
     background: #f5f5f5;
+}
+
+/* toolbar */
+.toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+}
+
+.search {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.pagination {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    justify-content: flex-end;
+    background: #fafafa;
+    border-top: 1px solid #eee;
+}
+
+.pagination button {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.activePage {
+    background: #1e90ff;
+    color: white;
+    border-color: #1e90ff;
+}
+
+.actions button {
+    margin-right: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
 }

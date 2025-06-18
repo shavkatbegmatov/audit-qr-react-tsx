@@ -1,7 +1,4 @@
-// src/components/table/TableRow.tsx
-// src/components/table/TableRow.tsx
-import type {Column} from './useTable';
-import styles from './Table.module.css';
+import type { Column } from './useTable';
 
 interface RowProps<T> {
     item: T;
@@ -12,15 +9,15 @@ interface RowProps<T> {
 
 export default function TableRow<T>({ item, columns, onEdit, onDelete }: RowProps<T>) {
     return (
-        <tr>
+        <tr className="hover:bg-gray-100">
             {columns.map(col => (
-                <td key={String(col.key)}>
+                <td key={String(col.key)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {String(item[col.key])}
                 </td>
             ))}
-            <td className={styles.actions}>
-                <button onClick={() => onEdit(item.id, item)}>✏️</button>
-                <button onClick={() => onDelete(item.id)}>🗑️</button>
+            <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
+                <button onClick={() => onEdit(item.id, item)} className="text-blue-600 hover:text-blue-900">✏️</button>
+                <button onClick={() => onDelete(item.id)} className="text-red-600 hover:text-red-900">🗑️</button>
             </td>
         </tr>
     );

@@ -1,9 +1,7 @@
-import styles from './Topbar.module.css';
-
 export default function Topbar() {
     return (
-        <header className={styles.topbar}>
-            <span className={styles.userInfo}>👤 Shavkat Begmatov</span>
+        <header className="sticky top-0 z-10 bg-white shadow px-6 py-4 flex items-center">
+            <span className="ml-auto font-semibold">👤 Shavkat Begmatov</span>
         </header>
     );
 }
