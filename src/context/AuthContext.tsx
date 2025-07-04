@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import authService from '../services/authService';
-import { validateToken } from '../services/tokenService'; // yangi import
+import { validateToken } from '../services/tokenService';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -27,31 +26,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
 
-            const valid = await validateToken(token);
-            if (!valid) {
-                authService.logout();
-            } else {
-                setIsAuthenticated(true);
+            try {
+                const valid = await validateToken(token);
+                setIsAuthenticated(valid);
+            } catch (err) {
+                console.error('Token check error:', err);
+                setIsAuthenticated(false);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
 
+        window.addEventListener('storage', checkToken);
         checkToken();
+        return () => {
+            window.removeEventListener('storage', checkToken);
+        }
     }, []);
 
     const login = () => setIsAuthenticated(true);
+
     const logout = () => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setIsAuthenticated(false);
-        window.location.href = '/login';
     };
-
-    useEffect(() => {
-        const onStorage = () => setIsAuthenticated(Boolean(localStorage.getItem('accessToken')));
-        window.addEventListener('storage', onStorage);
-        return () => window.removeEventListener('storage', onStorage);
-    }, []);
 
     if (isLoading) return <div>Loading...</div>;
 

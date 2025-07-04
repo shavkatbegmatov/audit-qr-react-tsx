@@ -1,5 +1,7 @@
-import {type ReactNode, useEffect } from 'react';
+import {type ReactNode } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from "@/context/AuthContext.tsx";
+
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
@@ -8,16 +10,10 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-    const token = localStorage.getItem('token');
+    const { isAuthenticated } = useAuth();
     const location = useLocation();
 
-    useEffect(() => {
-        if (!token) {
-            window.location.href = '/login';
-        }
-    }, [token]);
-
-    if (!token) {
+    if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 

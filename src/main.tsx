@@ -24,10 +24,10 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     }
 }
 
-window.addEventListener('unhandledrejection', e => {
-    console.warn('⚠️ Unhandled Promise:', e.reason);
-    e.preventDefault();
-});
+// window.addEventListener('unhandledrejection', e => {
+//     console.warn('⚠️ Unhandled Promise:', e.reason);
+//     e.preventDefault();
+// });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>

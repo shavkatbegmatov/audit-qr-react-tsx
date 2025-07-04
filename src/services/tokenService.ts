@@ -22,9 +22,10 @@ export interface TokenPair {
 
 export async function validateToken(token: string): Promise<boolean> {
     try {
-        const response = await api.post('/auth/validate-token-body', { token });
+        const response = await api.post('/validate-token-body', { token });
         return response.data.success === true;
     } catch (err) {
+        console.error('Token validation failed: ', err);
         return false;
     }
 }
