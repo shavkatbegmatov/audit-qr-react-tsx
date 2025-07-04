@@ -1,13 +1,13 @@
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LoadingFallback from './LoadingFallback';
+import { ROUTES } from '../App';
 
-export default function ProtectedRoute() {
-    const { isAuthenticated } = useAuth();
+const ProtectedRoute: React.FC = () => {
+    const { isAuthenticated, isLoading } = useAuth();
+    if (isLoading) return <LoadingFallback />;
+    return isAuthenticated ? <Outlet /> : <Navigate to={ROUTES.LOGIN} replace />;
+};
 
-    // faqatgina boolean qiymatga qarab redirect qilamiz
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-
-    return <Outlet />;
-}
+export default ProtectedRoute;

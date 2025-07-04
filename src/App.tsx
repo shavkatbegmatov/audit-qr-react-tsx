@@ -1,25 +1,50 @@
-// App.tsx
-import {Routes, Route, Navigate} from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Suspense, lazy } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
 import MainLayout from './components/layout/MainLayout';
-import DashboardPage from './pages/DashboardPage';
-import AuditObjectTypesPage from './pages/AuditObjectTypesPage';
+import LoadingFallback from './components/LoadingFallback';
+import AppErrorFallback from './components/AppErrorFallback';
 
-export default function App() {
+// Lazy load pages
+const LazyLoginPage = lazy(() => import('./pages/LoginPage'));
+const LazyDashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LazyAuditObjectTypesPage = lazy(() => import('./pages/AuditObjectTypesPage'));
+
+// Route constants
+export const ROUTES = {
+    LOGIN: '/login',
+    ROOT: '/',
+    AUDIT_OBJECT_TYPES: '/audit-object-types',
+    WILDCARD: '*',
+} as const;
+
+function App() {
     return (
-        <AuthProvider>
-            <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<MainLayout />}>
-                        <Route index element={<DashboardPage />} />
-                        <Route path="audit-object-types" element={<AuditObjectTypesPage />} />
-                    </Route>
-                </Route>
-                <Route path="*" element={<Navigate to="/login" replace />} /> {/* Catch-all route */}
-            </Routes>
-        </AuthProvider>
+        <ErrorBoundary FallbackComponent={AppErrorFallback}>
+            <AuthProvider>
+                <Suspense fallback={<LoadingFallback />}>
+                    <Routes>
+                        <Route path={ROUTES.LOGIN} element={<LazyLoginPage />} />
+                        <Route element={<ProtectedRoute />}>
+                            <Route path={ROUTES.ROOT} element={<MainLayout />}>
+                                <Route index element={<LazyDashboardPage />} />
+                                <Route
+                                    path={ROUTES.AUDIT_OBJECT_TYPES}
+                                    element={<LazyAuditObjectTypesPage />}
+                                />
+                            </Route>
+                        </Route>
+                        <Route
+                            path={ROUTES.WILDCARD}
+                            element={<Navigate to={ROUTES.LOGIN} replace />}
+                        />
+                    </Routes>
+                </Suspense>
+            </AuthProvider>
+        </ErrorBoundary>
     );
 }
+
+export default App;
