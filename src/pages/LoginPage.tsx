@@ -1,64 +1,96 @@
-import { useState } from 'react';
+import React, { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 
-export default function LoginPage() {
+interface LoginPageProps {
+    initialUsername?: string;
+    onLoginSuccess?: (username: string) => void;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSuccess }) => {
     const { isAuthenticated, login: markAsLoggedIn } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || '/';
 
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState(initialUsername);
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Если уже залогинились — сразу переходим
     if (isAuthenticated) {
         return <Navigate to={from} replace />;
     }
 
-
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
         setError(null);
+        setIsLoading(true);
         try {
             await authService.login(username, password);
             markAsLoggedIn();
+            if (onLoginSuccess) onLoginSuccess(username);
             navigate(from, { replace: true });
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Login failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <form onSubmit={handleLogin} className="p-6 bg-white shadow-md rounded w-96">
-                <h1 className="text-2xl mb-4 text-center">Login</h1>
-                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                <input
-                    type="text"
-                    autoComplete="username"
-                    placeholder="Username"
-                    value={username}
-                    onChange={e => setUsername(e.target.value)}
-                    className="border p-2 w-full rounded mb-4"
-                    required
-                />
-                <input
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className="border p-2 w-full rounded mb-4"
-                    required
-                />
-                <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded">
-                    Login
-                </button>
-            </form>
+            <div className="p-6 bg-white shadow-lg rounded-lg w-full max-w-md">
+                <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Login</h1>
+                {error && (
+                    <p className="text-red-500 text-center mb-4 bg-red-50 p-2 rounded" role="alert">
+                        {error}
+                    </p>
+                )}
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <div>
+                        <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                            Username
+                        </label>
+                        <input
+                            id="username"
+                            type="text"
+                            autoComplete="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                            required
+                            aria-label="Enter your username"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            Password
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            autoComplete="current-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                            required
+                            aria-label="Enter your password"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        disabled={isLoading}
+                        aria-label="Submit login credentials"
+                    >
+                        {isLoading ? 'Logging in...' : 'Login'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
-}
+};
+
+export default LoginPage;
