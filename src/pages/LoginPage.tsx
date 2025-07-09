@@ -13,7 +13,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || '/';
-    const { login, logout } = useAuthService();
+    const { login } = useAuthService();
 
     const [username, setUsername] = useState(initialUsername);
     const [password, setPassword] = useState('');
@@ -41,15 +41,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
             setError(err instanceof Error ? err.message : 'An unexpected error occurred');
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            await logout();
-        } catch (err) {
-            console.error('Logout error:', err);
-            navigate('/login', { state: { logoutError: err instanceof Error ? err.message : 'Logout failed' } });
         }
     };
 
@@ -132,12 +123,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
                         {isLoading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
-                <button
-                    onClick={handleLogout}
-                    className="w-full mt-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
-                >
-                    Logout
-                </button>
             </div>
         </div>
     );
