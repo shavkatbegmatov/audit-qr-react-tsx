@@ -29,7 +29,7 @@ const refreshToken = async (): Promise<string> => {
 
     try {
         const { data } = await axios.post<TokenResponse>(
-            `${import.meta.env.VITE_API_URL}/auth/refresh`,
+            `${import.meta.env.VITE_API_URL}/auth/refresh`, // /api/v1 allaqachon VITE_API_URL da
             { refreshToken },
             {
                 withCredentials: true,
@@ -50,7 +50,7 @@ const refreshToken = async (): Promise<string> => {
 
         const { accessToken, refreshToken: newRefreshToken } = data.data;
         localStorage.setItem('accessToken', accessToken);
-        localStorage.getItem('refreshToken', newRefreshToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
 
         return accessToken;
     } catch (error) {
@@ -74,7 +74,7 @@ const refreshToken = async (): Promise<string> => {
 };
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL + '/api/v1/auth',
+    baseURL: import.meta.env.VITE_API_URL, // Faqat VITE_API_URL, /api/v1 allaqachon ichida
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ const api = axios.create({
  * Request interceptor to attach access token
  */
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    const isAuthCall = config.url?.startsWith('/api/v1/auth/');
+    const isAuthCall = config.url?.startsWith('/auth/'); // /api/v1 allaqachon VITE_API_URL da
     const token = localStorage.getItem('accessToken');
     if (!isAuthCall && token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;

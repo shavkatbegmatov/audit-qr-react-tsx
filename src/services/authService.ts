@@ -60,7 +60,7 @@ const useAuthService = () => {
         }
 
         try {
-            const { data } = await api.post<TokenResponse>('/login', {
+            const { data } = await api.post<TokenResponse>('/auth/login', {
                 username: username.trim(),
                 password: password.trim(),
             });
@@ -103,7 +103,7 @@ const useAuthService = () => {
         try {
             if (accessToken) {
                 // Backend logout endpointini chaqirish
-                await api.post('/api/v1/auth/logout', {}, {
+                await api.post('/auth/logout', {}, {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
                     },
@@ -140,15 +140,15 @@ const useAuthService = () => {
         const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
         if (!refreshToken) {
-            await logout();
+            logout();
             throw new AuthError(401, 'No refresh token available');
         }
 
         try {
-            const { data } = await api.post<TokenResponse>('/api/v1/auth/refresh', { refreshToken });
+            const { data } = await api.post<TokenResponse>('/auth/refresh', { refreshToken });
 
             if (!data.success || !data.data) {
-                await logout();
+                logout();
                 throw new AuthError(
                     data.error?.code ?? 401,
                     data.error?.message ?? 'Token refresh failed',

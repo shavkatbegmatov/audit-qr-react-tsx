@@ -23,7 +23,7 @@ interface TokenResponse {
  */
 export async function validateToken(token: string): Promise<boolean> {
     try {
-        const response = await api.post('/api/v1/auth/validate-token-body', { token });
+        const response = await api.post('/auth/validate-token-body', { token });
         return response.data.success === true;
     } catch (error) {
         console.error('Token validation failed:', error);
@@ -52,7 +52,7 @@ const useTokenService = () => {
         }
 
         try {
-            const { data } = await api.post<TokenResponse>('/api/v1/auth/refresh', { refreshToken });
+            const { data } = await api.post<TokenResponse>('/auth/refresh', { refreshToken });
 
             if (!data.success || !data.data) {
                 console.warn('Token refresh failed:', data.error?.message);

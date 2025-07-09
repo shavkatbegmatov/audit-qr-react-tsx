@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import LoadingFallback from './components/LoadingFallback';
-import ErrorFallback from './components/ErrorFallback'; // AppErrorFallback o'rniga ErrorFallback
+import ErrorFallback from './components/ErrorFallback';
 
 // Lazy load pages
 const LazyLoginPage = lazy(() => import('./pages/LoginPage'));
