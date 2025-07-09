@@ -1,6 +1,6 @@
 import React, { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
-import authService from '../services/authService';
+import useAuthService from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 
 interface LoginPageProps {
@@ -13,6 +13,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || '/';
+    const { login } = useAuthService();
 
     const [username, setUsername] = useState(initialUsername);
     const [password, setPassword] = useState('');
@@ -27,13 +28,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
         e.preventDefault();
         setError(null);
         setIsLoading(true);
+
         try {
-            await authService.login(username, password);
+            await login(username, password);
             markAsLoggedIn();
             if (onLoginSuccess) onLoginSuccess(username);
             navigate(from, { replace: true });
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Login failed');
+            setError(err instanceof Error ? err.message : 'An unexpected error occurred');
         } finally {
             setIsLoading(false);
         }
@@ -41,16 +43,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="p-6 bg-white shadow-lg rounded-lg w-full max-w-md">
-                <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Login</h1>
+            <div className="p-8 bg-white shadow-xl rounded-lg w-full max-w-md">
+                <h1 className="text-2xl font-semibold text-center text-gray-800 mb-6">Sign In</h1>
                 {error && (
-                    <p className="text-red-500 text-center mb-4 bg-red-50 p-2 rounded" role="alert">
+                    <div
+                        className="text-red-600 bg-red-50 p-3 rounded-md mb-4 text-sm"
+                        role="alert"
+                        aria-live="assertive"
+                    >
                         {error}
-                    </p>
+                    </div>
                 )}
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-5">
                     <div>
-                        <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="username"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                             Username
                         </label>
                         <input
@@ -59,13 +68,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
                             autoComplete="username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                            className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             required
+                            disabled={isLoading}
                             aria-label="Enter your username"
                         />
                     </div>
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="password"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                             Password
                         </label>
                         <input
@@ -74,18 +87,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
                             autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                            className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             required
+                            disabled={isLoading}
                             aria-label="Enter your password"
                         />
                     </div>
                     <button
                         type="submit"
-                        className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={isLoading}
-                        aria-label="Submit login credentials"
+                        aria-label={isLoading ? 'Logging in' : 'Sign in'}
                     >
-                        {isLoading ? 'Logging in...' : 'Login'}
+                        {isLoading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
             </div>

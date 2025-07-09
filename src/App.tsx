@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import LoadingFallback from './components/LoadingFallback';
-import AppErrorFallback from './components/AppErrorFallback';
+import ErrorFallback from './components/ErrorFallback'; // AppErrorFallback o'rniga ErrorFallback
 
 // Lazy load pages
 const LazyLoginPage = lazy(() => import('./pages/LoginPage'));
@@ -22,7 +22,7 @@ export const ROUTES = {
 
 function App() {
     return (
-        <ErrorBoundary FallbackComponent={AppErrorFallback}>
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
             <AuthProvider>
                 <Suspense fallback={<LoadingFallback />}>
                     <Routes>

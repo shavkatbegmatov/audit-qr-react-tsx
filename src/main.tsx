@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ErrorBoundary } from 'react-error-boundary';
-import ErrorFallback from './components/ErrorFallback'; // Import the new component
+import ErrorFallback from './components/ErrorFallback';
 
 // Global unhandled promise rejection handler
 window.addEventListener('unhandledrejection', (event) => {

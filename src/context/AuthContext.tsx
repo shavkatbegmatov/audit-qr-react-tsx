@@ -1,26 +1,24 @@
-import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { validateToken } from '../services/tokenService';
-
-// Define token keys as constants
-const TOKEN_KEYS = {
-    ACCESS_TOKEN: 'accessToken',
-    REFRESH_TOKEN: 'refreshToken',
-} as const;
+import useAuthService from '../services/authService';
 
 // Interface for AuthContext
 interface AuthContextType {
     isAuthenticated: boolean;
-    login: () => void;
-    logout: () => void;
+    login: (username: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
     isLoading: boolean;
 }
 
-// Create context with undefined initial value for better type checking
+// Create context with undefined initial value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Custom hook for accessing auth context
-export const useAuth = () => {
-    const context = useContext(AuthContext);
+/**
+ * Custom hook for accessing auth context
+ * @throws Error if used outside AuthProvider
+ */
+export const useAuth = (): AuthContextType => {
+    const context = React.useContext(AuthContext);
     if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
@@ -31,20 +29,23 @@ interface AuthProviderProps {
     children: React.ReactNode;
 }
 
+/**
+ * Authentication provider component
+ * @param children - Child components to render
+ */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const { login, logout } = useAuthService();
 
-    // Memoize checkToken to prevent unnecessary re-renders
     const checkToken = useCallback(async () => {
         setIsLoading(true);
         try {
-            const token = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+            const token = localStorage.getItem('accessToken');
             if (!token) {
                 setIsAuthenticated(false);
                 return;
             }
-
             const isValid = await validateToken(token);
             setIsAuthenticated(isValid);
         } catch (error) {
@@ -55,48 +56,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     }, []);
 
-    // Handle storage events
     useEffect(() => {
         checkToken();
         const handleStorageChange = () => checkToken();
         window.addEventListener('storage', handleStorageChange);
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-        };
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, [checkToken]);
 
-    // Memoized login function
-    const login = useCallback(() => {
-        setIsAuthenticated(true);
-    }, []);
+    const handleLogin = useCallback(
+        async (username: string, password: string) => {
+            try {
+                await login(username, password);
+                setIsAuthenticated(true);
+            } catch (error) {
+                setIsAuthenticated(false);
+                throw error;
+            }
+        },
+        [login]
+    );
 
-    // Memoized logout function
-    const logout = useCallback(() => {
-        localStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
-        localStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
-        setIsAuthenticated(false);
-    }, []);
+    const handleLogout = useCallback(async () => {
+        try {
+            await logout();
+            setIsAuthenticated(false);
+        } catch (error) {
+            setIsAuthenticated(false);
+            throw error;
+        }
+    }, [logout]);
 
-    // Memoize context value to prevent unnecessary re-renders
     const contextValue = useMemo(
         () => ({
             isAuthenticated,
-            login,
-            logout,
+            login: handleLogin,
+            logout: handleLogout,
             isLoading,
         }),
-        [isAuthenticated, login, logout, isLoading]
+        [isAuthenticated, handleLogin, handleLogout, isLoading]
     );
-
-    // Render loading state
-    if (isLoading) {
-        return <div aria-live="polite">Loading authentication...</div>;
-    }
 
     return (
         <AuthContext.Provider value={contextValue}>
-            {children}
+            {isLoading ? (
+                <div className="flex items-center justify-center min-h-screen" aria-live="polite">
+                    Loading...
+                </div>
+            ) : (
+                children
+            )}
         </AuthContext.Provider>
     );
 };
