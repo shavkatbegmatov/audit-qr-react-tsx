@@ -15,14 +15,6 @@ interface TokenResponse {
     timestamp: string;
 }
 
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL + '/api/v1/auth',
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
 /**
  * Refreshes tokens using stored refresh token
  * @returns Promise resolving to new access token
@@ -36,7 +28,16 @@ const refreshToken = async (): Promise<string> => {
     }
 
     try {
-        const { data } = await api.post<TokenResponse>('/api/v1/auth/refresh', { refreshToken });
+        const { data } = await axios.post<TokenResponse>(
+            `${import.meta.env.VITE_API_URL}/api/v1/auth/refresh`,
+            { refreshToken },
+            {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
 
         if (!data.success || !data.data) {
             window.location.href = '/login';
@@ -49,7 +50,7 @@ const refreshToken = async (): Promise<string> => {
 
         const { accessToken, refreshToken: newRefreshToken } = data.data;
         localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
+        localStorage.getItem('refreshToken', newRefreshToken);
 
         return accessToken;
     } catch (error) {
@@ -71,6 +72,14 @@ const refreshToken = async (): Promise<string> => {
         throw new AuthError(401, `Token refresh failed: ${message}`);
     }
 };
+
+const api = axios.create({
+    baseURL: import.meta.env.VITE_API_URL + '/api/v1/auth',
+    withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
 /**
  * Request interceptor to attach access token

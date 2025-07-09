@@ -31,7 +31,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
 
         try {
             await login(username, password);
-            markAsLoggedIn();
+            markAsLoggedIn(); // Argumentsiz chaqiriladi
             if (onLoginSuccess) onLoginSuccess(username);
             navigate(from, { replace: true });
         } catch (err) {

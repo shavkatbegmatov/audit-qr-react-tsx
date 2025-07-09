@@ -1,11 +1,10 @@
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { validateToken } from '../services/tokenService';
-import useAuthService from '../services/authService';
 
 // Interface for AuthContext
 interface AuthContextType {
     isAuthenticated: boolean;
-    login: (username: string, password: string) => Promise<void>;
+    login: () => void;
     logout: () => Promise<void>;
     isLoading: boolean;
 }
@@ -36,17 +35,20 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const { login, logout } = useAuthService();
 
     const checkToken = useCallback(async () => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
+                console.warn('No access token available in localStorage');
                 setIsAuthenticated(false);
                 return;
             }
             const isValid = await validateToken(token);
+            if (!isValid) {
+                console.warn('Access token is invalid or expired');
+            }
             setIsAuthenticated(isValid);
         } catch (error) {
             console.error('Token validation failed:', error);
@@ -63,37 +65,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return () => window.removeEventListener('storage', handleStorageChange);
     }, [checkToken]);
 
-    const handleLogin = useCallback(
-        async (username: string, password: string) => {
-            try {
-                await login(username, password);
-                setIsAuthenticated(true);
-            } catch (error) {
-                setIsAuthenticated(false);
-                throw error;
-            }
-        },
-        [login]
-    );
+    const login = useCallback(() => {
+        setIsAuthenticated(true);
+    }, []);
 
-    const handleLogout = useCallback(async () => {
+    const logout = useCallback(async () => {
         try {
-            await logout();
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken) {
+                await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+            }
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
             setIsAuthenticated(false);
         } catch (error) {
+            console.error('Logout failed:', error);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
             setIsAuthenticated(false);
-            throw error;
         }
-    }, [logout]);
+    }, []);
 
     const contextValue = useMemo(
         () => ({
             isAuthenticated,
-            login: handleLogin,
-            logout: handleLogout,
+            login,
+            logout,
             isLoading,
         }),
-        [isAuthenticated, handleLogin, handleLogout, isLoading]
+        [isAuthenticated, login, logout, isLoading]
     );
 
     return (

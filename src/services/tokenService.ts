@@ -46,6 +46,7 @@ const useTokenService = () => {
     const refreshToken = async (): Promise<TokenPair> => {
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
+            console.warn('No refresh token available in localStorage');
             navigate('/login');
             throw new AuthError(401, 'No refresh token available');
         }
@@ -54,6 +55,7 @@ const useTokenService = () => {
             const { data } = await api.post<TokenResponse>('/api/v1/auth/refresh', { refreshToken });
 
             if (!data.success || !data.data) {
+                console.warn('Token refresh failed:', data.error?.message);
                 navigate('/login');
                 throw new AuthError(
                     data.error?.code ?? 401,
@@ -70,6 +72,7 @@ const useTokenService = () => {
         } catch (error) {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
+            console.error('Refresh token error:', error);
             navigate('/login');
 
             if (error instanceof AuthError) {
