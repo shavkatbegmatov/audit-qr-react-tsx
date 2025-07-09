@@ -48,6 +48,21 @@ const useAuthService = () => {
     const navigate = useNavigate();
 
     /**
+     * Validates the access token
+     * @param token - The token to validate
+     * @returns Promise resolving to boolean
+     */
+    const validateTokenLocally = async (token: string): Promise<boolean> => {
+        try {
+            const response = await api.post('/auth/validate-token-body', { token });
+            return response.data.success === true;
+        } catch (error) {
+            console.error('Token validation failed:', error);
+            return false;
+        }
+    };
+
+    /**
      * Logs in a user with provided credentials
      * @param username - User's username
      * @param password - User's password
@@ -100,31 +115,53 @@ const useAuthService = () => {
      */
     const logout = async (): Promise<void> => {
         const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        if (!navigator.onLine) {
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            navigate('/login', { state: { offline: true } });
+            throw new AuthError(0, 'Logout failed due to no internet connection');
+        }
+
+        if (!accessToken) {
+            console.warn('No access token available for logout');
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            navigate('/login');
+            throw new AuthError(401, 'No access token available');
+        }
+
+        const isValid = await validateTokenLocally(accessToken);
+        if (!isValid) {
+            console.warn('Access token is invalid or expired during logout');
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            navigate('/login');
+            throw new AuthError(401, 'Invalid or expired access token');
+        }
+
         try {
-            if (accessToken) {
-                // Backend logout endpointini chaqirish
-                await api.post('/auth/logout', {}, {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                });
+            const response = await api.post('/auth/logout', {}, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+            if (response.status === 200 && response.data.success) {
+                localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+                localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+                navigate('/login');
+            } else {
+                throw new Error('Logout response invalid');
             }
-            // Local storage'dan tokenlarni o'chirish
-            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-            // Login sahifasiga yo'naltirish
-            navigate('/login');
         } catch (error) {
-            // Xatolarni ushlash va log qilish
             localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-            navigate('/login');
-            if (axios.isAxiosError(error) && error.response?.data) {
-                const body = error.response.data as TokenResponse;
+            navigate('/login', { state: { logoutError: 'Logout failed due to server error' } });
+            if (axios.isAxiosError(error)) {
+                const body = error.response?.data as TokenResponse;
                 throw new AuthError(
-                    body.error?.code ?? error.response.status,
-                    body.error?.message ?? 'Logout failed',
-                    body.timestamp
+                    body?.error?.code ?? error.response?.status ?? 500,
+                    body?.error?.message ?? 'Logout failed',
+                    body?.timestamp
                 );
             }
             throw new AuthError(500, 'Unexpected error during logout');

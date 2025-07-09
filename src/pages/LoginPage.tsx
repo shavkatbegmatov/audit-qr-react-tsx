@@ -13,12 +13,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || '/';
-    const { login } = useAuthService();
+    const { login, logout } = useAuthService();
 
     const [username, setUsername] = useState(initialUsername);
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const offline = location.state?.offline;
+    const logoutError = location.state?.logoutError;
 
     if (isAuthenticated) {
         return <Navigate to={from} replace />;
@@ -42,10 +44,37 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (err) {
+            console.error('Logout error:', err);
+            navigate('/login', { state: { logoutError: err instanceof Error ? err.message : 'Logout failed' } });
+        }
+    };
+
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <div className="p-8 bg-white shadow-xl rounded-lg w-full max-w-md">
                 <h1 className="text-2xl font-semibold text-center text-gray-800 mb-6">Sign In</h1>
+                {offline && (
+                    <div
+                        className="text-yellow-600 bg-yellow-50 p-3 rounded-md mb-4 text-sm"
+                        role="alert"
+                        aria-live="assertive"
+                    >
+                        Logout failed due to no internet connection. Please check your network and try again.
+                    </div>
+                )}
+                {logoutError && (
+                    <div
+                        className="text-red-600 bg-red-50 p-3 rounded-md mb-4 text-sm"
+                        role="alert"
+                        aria-live="assertive"
+                    >
+                        {logoutError}
+                    </div>
+                )}
                 {error && (
                     <div
                         className="text-red-600 bg-red-50 p-3 rounded-md mb-4 text-sm"
@@ -103,6 +132,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
                         {isLoading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
+                <button
+                    onClick={handleLogout}
+                    className="w-full mt-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                >
+                    Logout
+                </button>
             </div>
         </div>
     );
