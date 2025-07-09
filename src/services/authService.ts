@@ -60,7 +60,7 @@ const useAuthService = () => {
         }
 
         try {
-            const { data } = await api.post<TokenResponse>('/api/v1/auth/login', {
+            const { data } = await api.post<TokenResponse>('/login', {
                 username: username.trim(),
                 password: password.trim(),
             });

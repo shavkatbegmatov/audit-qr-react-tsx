@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken) {
-                await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/logout`, {
+                await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${accessToken}`,

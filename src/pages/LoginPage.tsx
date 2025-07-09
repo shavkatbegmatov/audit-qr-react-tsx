@@ -31,10 +31,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
 
         try {
             await login(username, password);
-            markAsLoggedIn(); // Argumentsiz chaqiriladi
+            markAsLoggedIn();
             if (onLoginSuccess) onLoginSuccess(username);
             navigate(from, { replace: true });
         } catch (err) {
+            console.error('Login error:', err);
             setError(err instanceof Error ? err.message : 'An unexpected error occurred');
         } finally {
             setIsLoading(false);

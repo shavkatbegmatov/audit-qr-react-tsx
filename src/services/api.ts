@@ -29,7 +29,7 @@ const refreshToken = async (): Promise<string> => {
 
     try {
         const { data } = await axios.post<TokenResponse>(
-            `${import.meta.env.VITE_API_URL}/api/v1/auth/refresh`,
+            `${import.meta.env.VITE_API_URL}/auth/refresh`,
             { refreshToken },
             {
                 withCredentials: true,
