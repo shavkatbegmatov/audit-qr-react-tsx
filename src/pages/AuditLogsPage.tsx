@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from '../context/AuthContext'; // AuthContext'dan token olish uchun
@@ -16,8 +16,9 @@ interface AuditLog {
 const AuditLogsPage: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const [logs, setLogs] = useState<AuditLog[]>([]);
-    const [client, setClient] = useState<Client | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const clientRef = useRef<Client | null>(null);  // Client ni saqlash uchun ref
+    const subscribedRef = useRef<boolean>(false);  // Subscribe holatini saqlash uchun ref
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -31,26 +32,38 @@ const AuditLogsPage: React.FC = () => {
             return;
         }
 
-        const stompClient = new Client({
-            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}/ws-logs?access_token=${token}`),
-            connectHeaders: { Authorization: `Bearer ${token}` }, // JWT token
-            reconnectDelay: 5000,
-            onConnect: () => {
-                stompClient.subscribe('/topic/logs', (message) => {
-                    const log: AuditLog = JSON.parse(message.body);
-                    setLogs((prevLogs) => [...prevLogs, log]);
-                });
-            },
-            onStompError: (frame) => {
-                setError(`Xato: ${frame.body}`);
-            },
-        });
+        // Client ni faqat bir marta yarating
+        if (!clientRef.current) {
+            const stompClient = new Client({
+                webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}/ws-logs?access_token=${token}`),
+                connectHeaders: { Authorization: `Bearer ${token}` },
+                reconnectDelay: 5000,
+                onConnect: () => {
+                    // Subscribe ni faqat bir marta qiling
+                    if (!subscribedRef.current) {
+                        stompClient.subscribe('/topic/logs', (message) => {
+                            const log: AuditLog = JSON.parse(message.body);
+                            setLogs((prevLogs) => [...prevLogs, log]);
+                        });
+                        subscribedRef.current = true;
+                    }
+                },
+                onStompError: (frame) => {
+                    setError(`Xato: ${frame.body}`);
+                },
+            });
 
-        stompClient.activate();
-        setClient(stompClient);
+            stompClient.activate();
+            clientRef.current = stompClient;
+        }
 
         return () => {
-            if (client) client.deactivate();
+            // Cleanup: Component unmount bo'lganda client ni deactivate qiling
+            if (clientRef.current) {
+                clientRef.current.deactivate();
+                clientRef.current = null;
+                subscribedRef.current = false;
+            }
         };
     }, [isAuthenticated]);
 
