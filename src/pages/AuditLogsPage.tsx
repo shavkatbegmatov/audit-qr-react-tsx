@@ -71,6 +71,20 @@ const AuditLogsPage: React.FC = () => {
         return <div className="text-red-500 p-4">{error}</div>;
     }
 
+    // Vaqtni inson yaxshi ko'radigan formatga o'zgartirish funksiyasi
+    const formatTimestamp = (timestamp: string) => {
+        const date = new Date(timestamp);
+        return date.toLocaleString('uz-UZ', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short',
+        });
+    };
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg overflow-x-auto">
             <h1 className="text-2xl font-bold mb-6 text-gray-800">Audit Logs</h1>
@@ -96,7 +110,7 @@ const AuditLogsPage: React.FC = () => {
                                 index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
                             } ${log.outcome ? 'text-green-700' : 'text-red-700'}`}
                         >
-                            <td className="border px-6 py-3">{log.timestamp}</td>
+                            <td className="border px-6 py-3">{formatTimestamp(log.timestamp)}</td>
                             <td className="border px-6 py-3 font-medium">{log.username}</td>
                             <td className="border px-6 py-3">{log.action}</td>
                             <td className="border px-6 py-3">
