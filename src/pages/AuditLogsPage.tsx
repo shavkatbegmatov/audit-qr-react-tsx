@@ -72,38 +72,42 @@ const AuditLogsPage: React.FC = () => {
     }
 
     return (
-        <div className="bg-white p-6 rounded shadow overflow-x-auto">
-            <h1 className="text-2xl font-bold mb-4">Audit Logs</h1>
+        <div className="bg-white p-6 rounded-lg shadow-lg overflow-x-auto">
+            <h1 className="text-2xl font-bold mb-6 text-gray-800">Audit Logs</h1>
             {logs.length === 0 ? (
-                <p>Hech qanday log yo'q</p>
+                <p className="text-gray-600 italic">Hech qanday log yo'q</p>
             ) : (
-                <table className="min-w-full table-auto border-collapse border border-gray-300">
+                <table className="min-w-full table-auto border-collapse border border-gray-200 rounded-lg overflow-hidden">
                     <thead>
-                    <tr className="bg-gray-200 text-gray-800">
-                        <th className="border px-4 py-2 text-left">Vaqt</th>
-                        <th className="border px-4 py-2 text-left">Foydalanuvchi</th>
-                        <th className="border px-4 py-2 text-left">Harakat</th>
-                        <th className="border px-4 py-2 text-left">Natija</th>
-                        <th className="border px-4 py-2 text-left">IP</th>
-                        <th className="border px-4 py-2 text-left">Qo'shimcha</th>
+                    <tr className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                        <th className="border px-6 py-3 text-left font-semibold">Vaqt</th>
+                        <th className="border px-6 py-3 text-left font-semibold">Foydalanuvchi</th>
+                        <th className="border px-6 py-3 text-left font-semibold">Harakat</th>
+                        <th className="border px-6 py-3 text-left font-semibold">Natija</th>
+                        <th className="border px-6 py-3 text-left font-semibold">IP</th>
+                        <th className="border px-6 py-3 text-left font-semibold">Qo'shimcha</th>
                     </tr>
                     </thead>
                     <tbody>
                     {logs.map((log, index) => (
                         <tr
                             key={index}
-                            className={`${
-                                log.outcome ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-                            }`}
+                            className={`hover:bg-gray-100 transition-colors duration-200 ${
+                                index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                            } ${log.outcome ? 'text-green-700' : 'text-red-700'}`}
                         >
-                            <td className="border px-4 py-2">{log.timestamp}</td>
-                            <td className="border px-4 py-2">{log.username}</td>
-                            <td className="border px-4 py-2">{log.action}</td>
-                            <td className="border px-4 py-2">
-                                {log.outcome ? 'Muvaffaqiyatli' : 'Muvaffaqiyatsiz'}
+                            <td className="border px-6 py-3">{log.timestamp}</td>
+                            <td className="border px-6 py-3 font-medium">{log.username}</td>
+                            <td className="border px-6 py-3">{log.action}</td>
+                            <td className="border px-6 py-3">
+                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${
+                                        log.outcome ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                    }`}>
+                                        {log.outcome ? '✅ Muvaffaqiyatli' : '❌ Muvaffaqiyatsiz'}
+                                    </span>
                             </td>
-                            <td className="border px-4 py-2">{log.ipAddress}</td>
-                            <td className="border px-4 py-2 italic">
+                            <td className="border px-6 py-3">{log.ipAddress}</td>
+                            <td className="border px-6 py-3 italic text-gray-600">
                                 {log.details || '-'}
                             </td>
                         </tr>
