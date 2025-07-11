@@ -72,21 +72,45 @@ const AuditLogsPage: React.FC = () => {
     }
 
     return (
-        <div className="bg-white p-6 rounded shadow">
+        <div className="bg-white p-6 rounded shadow overflow-x-auto">
             <h1 className="text-2xl font-bold mb-4">Audit Logs</h1>
-            <ul className="space-y-4">
-                {logs.map((log, index) => (
-                    <li key={index} className="border-b pb-2">
-                        <p><strong>Vaqt:</strong> {log.timestamp}</p>
-                        <p><strong>Foydalanuvchi:</strong> {log.username}</p>
-                        <p><strong>Harakat:</strong> {log.action}</p>
-                        <p><strong>Natija:</strong> {log.outcome ? 'Muvaffaqiyatli' : 'Muvaffaqiyatsiz'}</p>
-                        <p><strong>IP:</strong> {log.ipAddress}</p>
-                        {log.details && <p><strong>Qo'shimcha:</strong> {log.details}</p>}
-                    </li>
-                ))}
-            </ul>
-            {logs.length === 0 && <p>Hech qanday log yo'q</p>}
+            {logs.length === 0 ? (
+                <p>Hech qanday log yo'q</p>
+            ) : (
+                <table className="min-w-full table-auto border-collapse border border-gray-300">
+                    <thead>
+                    <tr className="bg-gray-200 text-gray-800">
+                        <th className="border px-4 py-2 text-left">Vaqt</th>
+                        <th className="border px-4 py-2 text-left">Foydalanuvchi</th>
+                        <th className="border px-4 py-2 text-left">Harakat</th>
+                        <th className="border px-4 py-2 text-left">Natija</th>
+                        <th className="border px-4 py-2 text-left">IP</th>
+                        <th className="border px-4 py-2 text-left">Qo'shimcha</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {logs.map((log, index) => (
+                        <tr
+                            key={index}
+                            className={`${
+                                log.outcome ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                            }`}
+                        >
+                            <td className="border px-4 py-2">{log.timestamp}</td>
+                            <td className="border px-4 py-2">{log.username}</td>
+                            <td className="border px-4 py-2">{log.action}</td>
+                            <td className="border px-4 py-2">
+                                {log.outcome ? 'Muvaffaqiyatli' : 'Muvaffaqiyatsiz'}
+                            </td>
+                            <td className="border px-4 py-2">{log.ipAddress}</td>
+                            <td className="border px-4 py-2 italic">
+                                {log.details || '-'}
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 };
