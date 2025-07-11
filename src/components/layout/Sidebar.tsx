@@ -11,6 +11,9 @@ export default function Sidebar() {
                 <li>
                     <Link to="/audit-object-types" className="hover:underline">Audit Types</Link>
                 </li>
+                <li>
+                    <Link to="/audit-logs" className="hover:underline">Audit Logs</Link>
+                </li>
             </ul>
         </nav>
     );

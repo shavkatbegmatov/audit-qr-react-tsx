@@ -11,12 +11,14 @@ import ErrorFallback from './components/ErrorFallback';
 const LazyLoginPage = lazy(() => import('./pages/LoginPage'));
 const LazyDashboardPage = lazy(() => import('./pages/DashboardPage'));
 const LazyAuditObjectTypesPage = lazy(() => import('./pages/AuditObjectTypesPage'));
+const LazyAuditLogsPage = lazy(() => import('./pages/AuditLogsPage'));
 
 // Route constants
 export const ROUTES = {
     LOGIN: '/login',
     ROOT: '/',
     AUDIT_OBJECT_TYPES: '/audit-object-types',
+    AUDIT_LOGS: '/audit-logs',
     WILDCARD: '*',
 } as const;
 
@@ -33,6 +35,10 @@ function App() {
                                 <Route
                                     path={ROUTES.AUDIT_OBJECT_TYPES}
                                     element={<LazyAuditObjectTypesPage />}
+                                />
+                                <Route
+                                    path={ROUTES.AUDIT_LOGS}
+                                    element={<LazyAuditLogsPage />}
                                 />
                             </Route>
                         </Route>
