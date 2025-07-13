@@ -1,24 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { useAuth } from '../context/AuthContext'; // AuthContext'dan token olish uchun
-
-interface AuditLog {
-    userId: number | null;
-    username: string;
-    action: string;
-    timestamp: string; // OffsetDateTime string formatida
-    ipAddress: string;
-    outcome: boolean;
-    details: string | null;
-}
+import { useAuth } from '@/context/AuthContext';
+import type { AuditLog } from '@/types/LogEntry';
+import { API_ENDPOINTS, STORAGE_KEYS } from '@/utils/constants';
 
 const AuditLogsPage: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const clientRef = useRef<Client | null>(null);  // Client ni saqlash uchun ref
-    const subscribedRef = useRef<boolean>(false);  // Subscribe holatini saqlash uchun ref
+    const clientRef = useRef<Client | null>(null);
+    const subscribedRef = useRef<boolean>(false);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -26,20 +18,18 @@ const AuditLogsPage: React.FC = () => {
             return;
         }
 
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         if (!token) {
             setError('Token topilmadi');
             return;
         }
 
-        // Client ni faqat bir marta yarating
         if (!clientRef.current) {
             const stompClient = new Client({
-                webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}/ws-logs?access_token=${token}`),
+                webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}${API_ENDPOINTS.WS_LOGS}?access_token=${token}`),
                 connectHeaders: { Authorization: `Bearer ${token}` },
                 reconnectDelay: 5000,
                 onConnect: () => {
-                    // Subscribe ni faqat bir marta qiling
                     if (!subscribedRef.current) {
                         stompClient.subscribe('/topic/logs', (message) => {
                             const log: AuditLog = JSON.parse(message.body);
@@ -58,7 +48,6 @@ const AuditLogsPage: React.FC = () => {
         }
 
         return () => {
-            // Cleanup: Component unmount bo'lganda client ni deactivate qiling
             if (clientRef.current) {
                 clientRef.current.deactivate();
                 clientRef.current = null;
@@ -71,7 +60,6 @@ const AuditLogsPage: React.FC = () => {
         return <div className="text-red-500 p-4">{error}</div>;
     }
 
-    // Vaqtni "DD.MM.YYYY HH:MM:SS" formatga o'zgartirish funksiyasi
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
         const day = String(date.getDate()).padStart(2, '0');

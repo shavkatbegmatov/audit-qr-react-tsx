@@ -1,26 +1,17 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense, lazy } from 'react';
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import MainLayout from './components/layout/MainLayout';
-import LoadingFallback from './components/LoadingFallback';
-import ErrorFallback from './components/ErrorFallback';
+import { AuthProvider } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import MainLayout from '@/components/layout/MainLayout';
+import LoadingFallback from '@/components/LoadingFallback';
+import ErrorFallback from '@/components/ErrorFallback';
+import { ROUTES } from '@/utils/constants';
 
-// Lazy load pages
-const LazyLoginPage = lazy(() => import('./pages/LoginPage'));
-const LazyDashboardPage = lazy(() => import('./pages/DashboardPage'));
-const LazyAuditObjectTypesPage = lazy(() => import('./pages/AuditObjectTypesPage'));
-const LazyAuditLogsPage = lazy(() => import('./pages/AuditLogsPage'));
-
-// Route constants
-export const ROUTES = {
-    LOGIN: '/login',
-    ROOT: '/',
-    AUDIT_OBJECT_TYPES: '/audit-object-types',
-    AUDIT_LOGS: '/audit-logs',
-    WILDCARD: '*',
-} as const;
+const LazyLoginPage = lazy(() => import('@/pages/LoginPage'));
+const LazyDashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const LazyAuditObjectTypesPage = lazy(() => import('@/pages/AuditObjectTypesPage'));
+const LazyAuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
 
 function App() {
     return (

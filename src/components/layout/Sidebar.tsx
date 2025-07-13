@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ROUTES } from '@/utils/constants';
 
 export default function Sidebar() {
     return (
@@ -6,13 +7,13 @@ export default function Sidebar() {
             <h2 className="text-2xl font-bold mb-6">AuditQR</h2>
             <ul className="space-y-4">
                 <li>
-                    <Link to="/" className="hover:underline">Dashboard</Link>
+                    <Link to={ROUTES.ROOT} className="hover:underline">Dashboard</Link>
                 </li>
                 <li>
-                    <Link to="/audit-object-types" className="hover:underline">Audit Types</Link>
+                    <Link to={ROUTES.AUDIT_OBJECT_TYPES} className="hover:underline">Audit Types</Link>
                 </li>
                 <li>
-                    <Link to="/audit-logs" className="hover:underline">Audit Logs</Link>
+                    <Link to={ROUTES.AUDIT_LOGS} className="hover:underline">Audit Logs</Link>
                 </li>
             </ul>
         </nav>

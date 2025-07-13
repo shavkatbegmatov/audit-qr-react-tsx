@@ -1,7 +1,8 @@
 import React, { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
-import useAuthService from '../services/authService';
-import { useAuth } from '../context/AuthContext';
+import useAuthService from '@/services/authService';
+import { useAuth } from '@/context/AuthContext';
+import { ROUTES } from '@/utils/constants';
 
 interface LoginPageProps {
     initialUsername?: string;
@@ -12,7 +13,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
     const { isAuthenticated, login: markAsLoggedIn } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const from = location.state?.from?.pathname || '/';
+    const from = location.state?.from?.pathname || ROUTES.ROOT;
     const { login } = useAuthService();
 
     const [username, setUsername] = useState(initialUsername);
@@ -37,7 +38,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
             if (onLoginSuccess) onLoginSuccess(username);
             navigate(from, { replace: true });
         } catch (err) {
-            console.error('Login error:', err);
             setError(err instanceof Error ? err.message : 'An unexpected error occurred');
         } finally {
             setIsLoading(false);
@@ -116,7 +116,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
                     </div>
                     <button
                         type="submit"
-                        className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" // cursor: pointer qo'shildi
+                        className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         disabled={isLoading}
                         aria-label={isLoading ? 'Logging in' : 'Sign in'}
                     >

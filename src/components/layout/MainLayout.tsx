@@ -1,9 +1,9 @@
 import { type ReactNode } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from "@/context/AuthContext.tsx";
+import { useAuth } from "@/context/AuthContext";
 
-import Sidebar from './Sidebar';
-import Topbar from './Topbar';
+import Sidebar from '@/components/layout/Sidebar';
+import Topbar from '@/components/layout/Topbar';
 
 interface MainLayoutProps {
     children?: ReactNode;

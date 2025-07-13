@@ -1,7 +1,8 @@
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { validateToken } from '../services/tokenService';
+import { validateToken } from '@/services/authService';
+import { STORAGE_KEYS } from '@/utils/constants';
+import useAuthService from '@/services/authService';
 
-// Interface for AuthContext
 interface AuthContextType {
     isAuthenticated: boolean;
     login: () => void;
@@ -9,13 +10,8 @@ interface AuthContextType {
     isLoading: boolean;
 }
 
-// Create context with undefined initial value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/**
- * Custom hook for accessing auth context
- * @throws Error if used outside AuthProvider
- */
 export const useAuth = (): AuthContextType => {
     const context = React.useContext(AuthContext);
     if (context === undefined) {
@@ -28,27 +24,21 @@ interface AuthProviderProps {
     children: React.ReactNode;
 }
 
-/**
- * Authentication provider component
- * @param children - Child components to render
- */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const { logout } = useAuthService();
 
     const checkToken = useCallback(async () => {
         setIsLoading(true);
         try {
-            const token = localStorage.getItem('accessToken');
+            const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
             if (!token) {
-                console.warn('No access token available in localStorage');
                 setIsAuthenticated(false);
+                setIsLoading(false);
                 return;
             }
             const isValid = await validateToken(token);
-            if (!isValid) {
-                console.warn('Access token is invalid or expired');
-            }
             setIsAuthenticated(isValid);
         } catch (error) {
             console.error('Token validation failed:', error);
@@ -65,41 +55,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return () => window.removeEventListener('storage', handleStorageChange);
     }, [checkToken]);
 
-    const login = useCallback(() => {
+    const handleLogin = useCallback(() => {
         setIsAuthenticated(true);
-    }, []);
-
-    const logout = useCallback(async () => {
-        try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (accessToken) {
-                await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-            }
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            setIsAuthenticated(false);
-        } catch (error) {
-            console.error('Logout failed:', error);
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            setIsAuthenticated(false);
-        }
     }, []);
 
     const contextValue = useMemo(
         () => ({
             isAuthenticated,
-            login,
+            login: handleLogin,
             logout,
             isLoading,
         }),
-        [isAuthenticated, login, logout, isLoading]
+        [isAuthenticated, handleLogin, logout, isLoading]
     );
 
     return (

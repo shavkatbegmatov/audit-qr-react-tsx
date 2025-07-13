@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import React, { useState } from 'react';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '@/components/layout/ConfirmModal';
 
 interface TopbarProps {
     userName?: string;
@@ -15,14 +15,16 @@ const Topbar: React.FC<TopbarProps> = ({ userName = 'Shavkat Begmatov', onLogout
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         setIsLoggingOut(true);
-        console.log('Logout confirmed');
-        logout();
-        navigate('/login', { replace: true });
-        setIsLoggingOut(false);
-        setShowConfirmModal(false);
-        if (onLogoutSuccess) onLogoutSuccess();
+        try {
+            await logout();
+            navigate('/login', { replace: true });
+            if (onLogoutSuccess) onLogoutSuccess();
+        } finally {
+            setIsLoggingOut(false);
+            setShowConfirmModal(false);
+        }
     };
 
     const handleLogoutClick = () => {
@@ -35,9 +37,9 @@ const Topbar: React.FC<TopbarProps> = ({ userName = 'Shavkat Begmatov', onLogout
 
     return (
         <div className="flex justify-between items-center p-4 bg-white shadow-md border-b border-gray-200">
-      <span className="text-lg font-semibold text-gray-800 flex items-center">
-        👤 {userName}
-      </span>
+            <span className="text-lg font-semibold text-gray-800 flex items-center">
+                👤 {userName}
+            </span>
             <div>
                 <button
                     onClick={handleLogoutClick}
