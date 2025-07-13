@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/context/AuthContext';
+import OnlineUsers from "@/components/OnlineUsers.tsx";
 
 export default function DashboardPage() {
     const { logout } = useAuth();
@@ -38,6 +39,10 @@ export default function DashboardPage() {
                         <h2 className="text-xl font-semibold mb-2">User Management</h2>
                         <p className="text-gray-600 text-sm">Foydalanuvchilarni boshqarish</p>
                     </div>
+                </div>
+                {/* OnlineUsers komponentini qo'shish */}
+                <div className="mt-8">
+                    <OnlineUsers />
                 </div>
             </div>
         </div>

@@ -21,6 +21,8 @@ const Topbar: React.FC<TopbarProps> = ({ userName = 'Shavkat Begmatov', onLogout
             await logout();
             navigate('/login', { replace: true });
             if (onLogoutSuccess) onLogoutSuccess();
+        } catch (error) {
+            console.error('Logout error:', error);
         } finally {
             setIsLoggingOut(false);
             setShowConfirmModal(false);

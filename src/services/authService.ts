@@ -102,7 +102,7 @@ const useAuthService = () => {
         } finally {
             localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-            navigate('/login');
+            // Removed navigate from here to avoid redundancy; handled in caller or context
         }
     };
 
