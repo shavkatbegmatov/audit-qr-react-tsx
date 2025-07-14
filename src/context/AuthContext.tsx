@@ -6,7 +6,7 @@ import useAuthService from '@/services/authService';
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    login: () => Promise<void>; // Yangi: asinxron
+    login: () => Promise<void>;
     logout: () => Promise<void>;
     isLoading: boolean;
 }
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (timeUntilExpiry <= 30) {
                 console.log('Token muddati tugashiga yaqin – refresh qilinmoqda');
                 await refreshToken();
-                setIsAuthenticated(true);
+                await checkToken(); // Refresh keyin qayta check
             }
         } catch (error) {
             console.error('Auto refresh failed:', error);

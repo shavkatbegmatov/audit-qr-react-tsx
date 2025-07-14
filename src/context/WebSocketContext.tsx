@@ -74,6 +74,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 onStompError: (frame) => {
                     setError(`Xato: ${frame.body}`);
                 },
+                onDisconnect: () => {
+                    subscribedRef.current = false;
+                },
             });
 
             stompClient.activate();
@@ -95,6 +98,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         };
     }, [isAuthenticated, connectWebSocket]);
 
+    // Sahifa o'zgarishini backendga yuborish
     useEffect(() => {
         if (clientRef.current && clientRef.current.active && subscribedRef.current) {
             const username = localStorage.getItem('username');
@@ -107,12 +111,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
     }, [location.pathname]);
 
+    // Token o'zgarganda yoki storage change da reconnect
     useEffect(() => {
-        const handleTokenChange = () => {
-            if (clientRef.current) {
-                clientRef.current.deactivate();
-                clientRef.current = null;
-                subscribedRef.current = false;
+        const handleTokenChange = (event: StorageEvent) => {
+            if (event.key === STORAGE_KEYS.ACCESS_TOKEN || event.key === STORAGE_KEYS.REFRESH_TOKEN) {
+                if (clientRef.current) {
+                    clientRef.current.deactivate();
+                    clientRef.current = null;
+                    subscribedRef.current = false;
+                }
                 connectWebSocket();
             }
         };
