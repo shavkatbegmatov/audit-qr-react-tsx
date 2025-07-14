@@ -11,7 +11,16 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => (
         <pre>{error.message}</pre>
         <button
             onClick={() => window.location.reload()}
-            style={{ marginTop: '1rem' }}
+            style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#dc3545',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                marginTop: '1rem',
+            }}
         >
             Try Again
         </button>

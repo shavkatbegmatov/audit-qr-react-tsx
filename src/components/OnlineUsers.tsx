@@ -1,85 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
-import { useAuth } from '../context/AuthContext';
-import { useLocation } from 'react-router-dom'; // Sahifa o'zgarishini kuzatish uchun
-
-interface OnlineUser {
-    username: string;
-    onlineSince: string; // LocalDateTime string
-    currentPage: string;
-    // Tarix uchun: pageHistory: string[]; agar kerak bo'lsa qo'shing
-}
+import React from 'react';
+import { useWebSocket } from '../context/WebSocketContext';
 
 const OnlineUsers: React.FC = () => {
-    const { isAuthenticated } = useAuth();
-    const location = useLocation(); // Joriy sahifani olish uchun
-    const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-    const [error, setError] = useState<string | null>(null);
-    const clientRef = useRef<Client | null>(null);  // Client ni saqlash uchun ref
-    const subscribedRef = useRef<boolean>(false);  // Subscribe holatini saqlash uchun ref
+    const { onlineUsers, error } = useWebSocket();
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            setError('Autentikatsiya talab qilinadi');
-            return;
-        }
-
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            setError('Token topilmadi');
-            return;
-        }
-
-        // Client ni faqat bir marta yarating
-        if (!clientRef.current) {
-            const stompClient = new Client({
-                webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}/ws-logs?access_token=${token}`),
-                connectHeaders: { Authorization: `Bearer ${token}` },
-                reconnectDelay: 5000,
-                onConnect: () => {
-                    // Subscribe ni faqat bir marta qiling
-                    if (!subscribedRef.current) {
-                        stompClient.subscribe('/topic/online-users', (message) => {
-                            const users: OnlineUser[] = JSON.parse(message.body);
-                            setOnlineUsers(users);
-                        });
-                        subscribedRef.current = true;
-                    }
-                },
-                onStompError: (frame) => {
-                    setError(`Xato: ${frame.body}`);
-                },
-            });
-
-            stompClient.activate();
-            clientRef.current = stompClient;
-        }
-
-        return () => {
-            // Cleanup: Component unmount bo'lganda client ni deactivate qiling
-            if (clientRef.current) {
-                clientRef.current.deactivate();
-                clientRef.current = null;
-                subscribedRef.current = false;
-            }
-        };
-    }, [isAuthenticated]);
-
-    // Sahifa o'zgarishini backendga yuborish
-    useEffect(() => {
-        if (clientRef.current && clientRef.current.active && subscribedRef.current) {
-            const username = localStorage.getItem('username'); // Username ni AuthContext yoki localStorage dan oling (loyihangizga moslang)
-            if (username) {
-                clientRef.current.publish({
-                    destination: '/app/update-page',
-                    body: JSON.stringify({ username, page: location.pathname }),
-                });
-            }
-        }
-    }, [location.pathname]); // Sahifa o'zgarganda ishga tushadi
-
-    // Vaqtni "DD.MM.YYYY HH:MM:SS" formatga o'zgartirish funksiyasi
+    // DD.MM.YYYY HH:MM:SS
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
         const day = String(date.getDate()).padStart(2, '0');

@@ -1,12 +1,12 @@
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { jwtDecode } from 'jwt-decode'; // Yangi import: jwt-decode
-import { validateToken, refreshToken } from '@/services/authService'; // refreshToken ni shu yerdan oling
+import { jwtDecode } from 'jwt-decode';
+import { validateToken, refreshToken } from '@/services/authService';
 import { STORAGE_KEYS } from '@/utils/constants';
 import useAuthService from '@/services/authService';
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    login: () => void;
+    login: () => Promise<void>;
     logout: () => Promise<void>;
     isLoading: boolean;
 }
@@ -86,9 +86,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
     }, [checkToken, autoRefreshToken]);
 
-    const handleLogin = useCallback(() => {
+    const handleLogin = useCallback(async () => {
+        await checkToken();
         setIsAuthenticated(true);
-    }, []);
+    }, [checkToken]);
 
     const handleLogout = useCallback(async () => {
         await serviceLogout();

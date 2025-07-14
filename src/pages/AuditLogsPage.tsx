@@ -1,60 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
-import { useAuth } from '@/context/AuthContext';
-import type { AuditLog } from '@/types/LogEntry';
-import { API_ENDPOINTS, STORAGE_KEYS } from '@/utils/constants';
+import React from 'react';
+import { useWebSocket } from '@/context/WebSocketContext';
 
 const AuditLogsPage: React.FC = () => {
-    const { isAuthenticated } = useAuth();
-    const [logs, setLogs] = useState<AuditLog[]>([]);
-    const [error, setError] = useState<string | null>(null);
-    const clientRef = useRef<Client | null>(null);
-    const subscribedRef = useRef<boolean>(false);
-
-    useEffect(() => {
-        if (!isAuthenticated) {
-            setError('Autentikatsiya talab qilinadi');
-            return;
-        }
-
-        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        if (!token) {
-            setError('Token topilmadi');
-            return;
-        }
-
-        if (!clientRef.current) {
-            const stompClient = new Client({
-                webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}${API_ENDPOINTS.WS_LOGS}?access_token=${token}`),
-                connectHeaders: { Authorization: `Bearer ${token}` },
-                reconnectDelay: 5000,
-                onConnect: () => {
-                    if (!subscribedRef.current) {
-                        stompClient.subscribe('/topic/logs', (message) => {
-                            const log: AuditLog = JSON.parse(message.body);
-                            setLogs((prevLogs) => [...prevLogs, log]);
-                        });
-                        subscribedRef.current = true;
-                    }
-                },
-                onStompError: (frame) => {
-                    setError(`Xato: ${frame.body}`);
-                },
-            });
-
-            stompClient.activate();
-            clientRef.current = stompClient;
-        }
-
-        return () => {
-            if (clientRef.current) {
-                clientRef.current.deactivate();
-                clientRef.current = null;
-                subscribedRef.current = false;
-            }
-        };
-    }, [isAuthenticated]);
+    const { logs, error } = useWebSocket();
 
     if (error) {
         return <div className="text-red-500 p-4">{error}</div>;

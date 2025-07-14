@@ -65,6 +65,7 @@ const useAuthService = () => {
             const { accessToken, refreshToken } = data.data;
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
             localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+            localStorage.setItem('username', username.trim()); // Yangi: Username saqlash
 
             return { accessToken, refreshToken };
         } catch (error) {
@@ -76,6 +77,7 @@ const useAuthService = () => {
         if (!navigator.onLine) {
             localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            localStorage.removeItem('username'); // Yangi: Username olib tashlash
             navigate('/login', { state: { offline: true } });
             throw new AuthError(0, 'Logout failed due to no internet connection');
         }
@@ -102,6 +104,7 @@ const useAuthService = () => {
         } finally {
             localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            localStorage.removeItem('username'); // Yangi: Username olib tashlash
             // Removed navigate from here to avoid redundancy; handled in caller or context
         }
     };

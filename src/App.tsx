@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense, lazy } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
+import { WebSocketProvider } from '@/context/WebSocketContext'; // Yangi import
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import LoadingFallback from '@/components/LoadingFallback';
@@ -17,28 +18,30 @@ function App() {
     return (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
             <AuthProvider>
-                <Suspense fallback={<LoadingFallback />}>
-                    <Routes>
-                        <Route path={ROUTES.LOGIN} element={<LazyLoginPage />} />
-                        <Route element={<ProtectedRoute />}>
-                            <Route path={ROUTES.ROOT} element={<MainLayout />}>
-                                <Route index element={<LazyDashboardPage />} />
-                                <Route
-                                    path={ROUTES.AUDIT_OBJECT_TYPES}
-                                    element={<LazyAuditObjectTypesPage />}
-                                />
-                                <Route
-                                    path={ROUTES.AUDIT_LOGS}
-                                    element={<LazyAuditLogsPage />}
-                                />
+                <WebSocketProvider>
+                    <Suspense fallback={<LoadingFallback />}>
+                        <Routes>
+                            <Route path={ROUTES.LOGIN} element={<LazyLoginPage />} />
+                            <Route element={<ProtectedRoute />}>
+                                <Route path={ROUTES.ROOT} element={<MainLayout />}>
+                                    <Route index element={<LazyDashboardPage />} />
+                                    <Route
+                                        path={ROUTES.AUDIT_OBJECT_TYPES}
+                                        element={<LazyAuditObjectTypesPage />}
+                                    />
+                                    <Route
+                                        path={ROUTES.AUDIT_LOGS}
+                                        element={<LazyAuditLogsPage />}
+                                    />
+                                </Route>
                             </Route>
-                        </Route>
-                        <Route
-                            path={ROUTES.WILDCARD}
-                            element={<Navigate to={ROUTES.LOGIN} replace />}
-                        />
-                    </Routes>
-                </Suspense>
+                            <Route
+                                path={ROUTES.WILDCARD}
+                                element={<Navigate to={ROUTES.LOGIN} replace />}
+                            />
+                        </Routes>
+                    </Suspense>
+                </WebSocketProvider>
             </AuthProvider>
         </ErrorBoundary>
     );
