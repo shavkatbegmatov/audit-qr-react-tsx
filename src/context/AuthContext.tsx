@@ -6,7 +6,7 @@ import useAuthService from '@/services/authService';
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    login: () => Promise<void>;
+    login: () => Promise<void>; // Yangi: asinxron
     logout: () => Promise<void>;
     isLoading: boolean;
 }
@@ -48,26 +48,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     }, []);
 
-    // Yangi funksiya: Token muddatini tekshirib, refresh qilish
     const autoRefreshToken = useCallback(async () => {
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         if (!token) return;
 
         try {
-            const decoded: { exp?: number } = jwtDecode(token); // Tokenni decode qilish
+            const decoded: { exp?: number } = jwtDecode(token);
             if (!decoded.exp) return;
 
-            const currentTime = Math.floor(Date.now() / 1000); // Hozirgi vaqt (sekundlarda)
+            const currentTime = Math.floor(Date.now() / 1000);
             const timeUntilExpiry = decoded.exp - currentTime;
 
-            if (timeUntilExpiry <= 30) { // 30 soniya qolganda refresh
+            if (timeUntilExpiry <= 30) {
                 console.log('Token muddati tugashiga yaqin – refresh qilinmoqda');
-                await refreshToken(); // Yangi token olish (localStorage ga saqlanadi)
-                setIsAuthenticated(true); // Autentifikatsiyani yangilash
+                await refreshToken();
+                setIsAuthenticated(true);
             }
         } catch (error) {
             console.error('Auto refresh failed:', error);
-            // Agar decode xato bo'lsa, logout qilish mumkin
             await handleLogout();
         }
     }, []);
@@ -77,12 +75,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const handleStorageChange = () => checkToken();
         window.addEventListener('storage', handleStorageChange);
 
-        // Yangi: Har 10 soniyada tokenni tekshirish intervali
-        const refreshInterval = setInterval(autoRefreshToken, 10000); // Har 10 soniyada tekshirish
+        const refreshInterval = setInterval(autoRefreshToken, 10000);
 
         return () => {
             window.removeEventListener('storage', handleStorageChange);
-            clearInterval(refreshInterval); // Intervalni tozalash
+            clearInterval(refreshInterval);
         };
     }, [checkToken, autoRefreshToken]);
 

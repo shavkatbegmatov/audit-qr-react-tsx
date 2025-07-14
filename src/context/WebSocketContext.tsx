@@ -4,7 +4,7 @@ import SockJS from 'sockjs-client';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { STORAGE_KEYS, API_ENDPOINTS } from '@/utils/constants';
-import type { AuditLog } from '@/types/LogEntry'; // LogEntry.ts dan import qiling
+import type { AuditLog } from '@/types/LogEntry';
 
 interface OnlineUser {
     username: string;
@@ -60,12 +60,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 reconnectDelay: 5000,
                 onConnect: () => {
                     if (!subscribedRef.current) {
-                        // Online users subscribe
                         stompClient.subscribe('/topic/online-users', (message) => {
                             const users: OnlineUser[] = JSON.parse(message.body);
                             setOnlineUsers(users);
                         });
-                        // Logs subscribe
                         stompClient.subscribe('/topic/logs', (message) => {
                             const log: AuditLog = JSON.parse(message.body);
                             setLogs((prevLogs) => [...prevLogs, log]);
@@ -84,7 +82,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }, [isAuthenticated]);
 
     useEffect(() => {
-        connectWebSocket();
+        if (isAuthenticated) {
+            connectWebSocket();
+        }
 
         return () => {
             if (clientRef.current) {
@@ -93,9 +93,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 subscribedRef.current = false;
             }
         };
-    }, [connectWebSocket]);
+    }, [isAuthenticated, connectWebSocket]);
 
-    // Sahifa o'zgarishini backendga yuborish
     useEffect(() => {
         if (clientRef.current && clientRef.current.active && subscribedRef.current) {
             const username = localStorage.getItem('username');
@@ -108,14 +107,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
     }, [location.pathname]);
 
-    // Token refresh bo'lganda reconnect (storage o'zgarganda)
     useEffect(() => {
         const handleTokenChange = () => {
             if (clientRef.current) {
                 clientRef.current.deactivate();
                 clientRef.current = null;
                 subscribedRef.current = false;
-                connectWebSocket(); // Yangi token bilan reconnect
+                connectWebSocket();
             }
         };
         window.addEventListener('storage', handleTokenChange);

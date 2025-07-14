@@ -34,7 +34,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
 
         try {
             await login(username, password);
-            markAsLoggedIn();
+            await markAsLoggedIn(); // Asinxron kutish
             if (onLoginSuccess) onLoginSuccess(username);
             navigate(from, { replace: true });
         } catch (err) {
