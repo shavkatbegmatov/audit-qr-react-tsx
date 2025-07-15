@@ -54,7 +54,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
 
         if (clientRef.current && clientRef.current.active) {
-            return; // Faol ulanish bor bo'lsa, qayta ulanmang
+            return;
         }
 
         const stompClient = new Client({
@@ -74,8 +74,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                     subscribedRef.current = true;
                 }
 
-
-                // Send initial page update to server
                 const storedUsername = localStorage.getItem('username');
                 if (storedUsername) {
                     stompClient.publish({
@@ -83,11 +81,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                         body: JSON.stringify({username: storedUsername, page: location.pathname}),
                     });
                 }
-
             },
             onStompError: (frame) => {
                 setError(`Xato: ${frame.body}`);
-                // Token noto'g'ri bo'lsa, ulanishni to'xtatish
                 if (clientRef.current) {
                     clientRef.current.deactivate();
                     clientRef.current = null;
@@ -104,19 +100,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }, [isAuthenticated, location.pathname]);
 
     useEffect(() => {
-
         connectWebSocket();
-
-        // if (isAuthenticated) {
-        //     connectWebSocket();
-        // } else if (clientRef.current) {
-        //     clientRef.current.deactivate();
-        //     clientRef.current = null;
-        //     subscribedRef.current = false;
-        //     setOnlineUsers([]);
-        //     setLogs([]);
-        //     setError(null);
-        // }
 
         return () => {
             if (clientRef.current) {
@@ -125,7 +109,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 subscribedRef.current = false;
             }
         };
-    }, [isAuthenticated, connectWebSocket]);
+    }, [connectWebSocket]);
 
     useEffect(() => {
         if (clientRef.current && clientRef.current.active && subscribedRef.current) {
@@ -149,11 +133,41 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 }
                 if (isAuthenticated) {
                     connectWebSocket();
+                } else {
+                    setError('Token yo\'qolgan – ulanish uzildi');
                 }
             }
         };
         window.addEventListener('storage', handleTokenChange);
-        return () => window.removeEventListener('storage', handleTokenChange);
+
+        const tokenCheckInterval = setInterval(() => {
+            if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
+                if (clientRef.current) {
+                    clientRef.current.deactivate();
+                    clientRef.current = null;
+                    subscribedRef.current = false;
+                }
+                setError('Token yo\'qolgan – ulanish uzildi');
+            }
+        }, 5000);
+
+        // Yangi: Tab visibility change da token tekshirish
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
+                    setError('Token yo\'qolgan – ulanish uzildi');
+                } else if (isAuthenticated) {
+                    connectWebSocket();
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener('storage', handleTokenChange);
+            clearInterval(tokenCheckInterval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [isAuthenticated, connectWebSocket]);
 
     const value = { onlineUsers, logs, error };

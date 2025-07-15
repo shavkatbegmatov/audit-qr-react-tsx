@@ -1,7 +1,8 @@
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { validateToken, refreshToken } from '@/services/authService';
-import { STORAGE_KEYS } from '@/utils/constants';
+import { STORAGE_KEYS, ROUTES } from '@/utils/constants';
 import useAuthService from '@/services/authService';
 
 interface AuthContextType {
@@ -29,6 +30,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const { logout: serviceLogout } = useAuthService();
+    const navigate = useNavigate();
 
     const checkToken = useCallback(async () => {
         setIsLoading(true);
@@ -36,11 +38,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
             if (!token) {
                 setIsAuthenticated(false);
-                return false; // Yangi: natijani qaytarish
+                return false;
             }
             const isValid = await validateToken(token);
             setIsAuthenticated(isValid);
-            return isValid; // Yangi: natijani qaytarish
+            return isValid;
         } catch (error) {
             console.error('Token validation failed:', error);
             setIsAuthenticated(false);
@@ -64,8 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (timeUntilExpiry <= 30) {
                 console.log('Token muddati tugashiga yaqin – refresh qilinmoqda');
                 await refreshToken();
-                const isValid = await checkToken(); // Refresh keyin qayta check
-                setIsAuthenticated(isValid);
+                await checkToken();
             }
         } catch (error) {
             console.error('Auto refresh failed:', error);
@@ -80,26 +81,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const refreshInterval = setInterval(autoRefreshToken, 10000);
 
+        const tokenCheckInterval = setInterval(async () => {
+            if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
+                await handleLogout();
+            }
+        }, 5000);
+
+        const handleVisibilityChange = async () => {
+            console.log('Visibility changed:', document.visibilityState); // Yangi: Log qo'shildi
+            if (document.visibilityState === 'visible') {
+                await checkToken();
+                if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
+                    await handleLogout();
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             clearInterval(refreshInterval);
+            clearInterval(tokenCheckInterval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, [checkToken, autoRefreshToken]);
 
     const handleLogin = useCallback(async () => {
-        const isValid = await checkToken(); // Yangi: checkToken ni kutish
-        if (isValid) {
-            setIsAuthenticated(true);
-        } else {
-            console.error('Login failed: Invalid token after login');
-            setIsAuthenticated(false);
-        }
+        await checkToken();
+        setIsAuthenticated(true);
     }, [checkToken]);
 
     const handleLogout = useCallback(async () => {
         await serviceLogout();
         setIsAuthenticated(false);
-    }, [serviceLogout]);
+        navigate(ROUTES.LOGIN, { replace: true });
+    }, [serviceLogout, navigate]);
 
     const contextValue = useMemo(
         () => ({
