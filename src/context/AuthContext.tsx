@@ -88,7 +88,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }, 5000);
 
         const handleVisibilityChange = async () => {
-            console.log('Visibility changed:', document.visibilityState); // Yangi: Log qo'shildi
+            console.log('Visibility changed:', document.visibilityState);
             if (document.visibilityState === 'visible') {
                 await checkToken();
                 if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
