@@ -36,13 +36,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
             if (!token) {
                 setIsAuthenticated(false);
-                return;
+                return false; // Yangi: natijani qaytarish
             }
             const isValid = await validateToken(token);
             setIsAuthenticated(isValid);
+            return isValid; // Yangi: natijani qaytarish
         } catch (error) {
             console.error('Token validation failed:', error);
             setIsAuthenticated(false);
+            return false;
         } finally {
             setIsLoading(false);
         }
@@ -62,7 +64,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (timeUntilExpiry <= 30) {
                 console.log('Token muddati tugashiga yaqin – refresh qilinmoqda');
                 await refreshToken();
-                await checkToken(); // Refresh keyin qayta check
+                const isValid = await checkToken(); // Refresh keyin qayta check
+                setIsAuthenticated(isValid);
             }
         } catch (error) {
             console.error('Auto refresh failed:', error);
@@ -84,8 +87,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }, [checkToken, autoRefreshToken]);
 
     const handleLogin = useCallback(async () => {
-        await checkToken();
-        setIsAuthenticated(true);
+        const isValid = await checkToken(); // Yangi: checkToken ni kutish
+        if (isValid) {
+            setIsAuthenticated(true);
+        } else {
+            console.error('Login failed: Invalid token after login');
+            setIsAuthenticated(false);
+        }
     }, [checkToken]);
 
     const handleLogout = useCallback(async () => {

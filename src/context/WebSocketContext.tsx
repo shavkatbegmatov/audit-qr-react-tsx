@@ -53,41 +53,70 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             return;
         }
 
-        if (!clientRef.current) {
-            const stompClient = new Client({
-                webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}${API_ENDPOINTS.WS_LOGS}?access_token=${token}`),
-                connectHeaders: { Authorization: `Bearer ${token}` },
-                reconnectDelay: 5000,
-                onConnect: () => {
-                    if (!subscribedRef.current) {
-                        stompClient.subscribe('/topic/online-users', (message) => {
-                            const users: OnlineUser[] = JSON.parse(message.body);
-                            setOnlineUsers(users);
-                        });
-                        stompClient.subscribe('/topic/logs', (message) => {
-                            const log: AuditLog = JSON.parse(message.body);
-                            setLogs((prevLogs) => [...prevLogs, log]);
-                        });
-                        subscribedRef.current = true;
-                    }
-                },
-                onStompError: (frame) => {
-                    setError(`Xato: ${frame.body}`);
-                },
-                onDisconnect: () => {
-                    subscribedRef.current = false;
-                },
-            });
-
-            stompClient.activate();
-            clientRef.current = stompClient;
+        if (clientRef.current && clientRef.current.active) {
+            return; // Faol ulanish bor bo'lsa, qayta ulanmang
         }
-    }, [isAuthenticated]);
+
+        const stompClient = new Client({
+            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}${API_ENDPOINTS.WS_LOGS}?access_token=${token}`),
+            connectHeaders: { Authorization: `Bearer ${token}` },
+            reconnectDelay: 5000,
+            onConnect: () => {
+                if (!subscribedRef.current) {
+                    stompClient.subscribe('/topic/online-users', (message) => {
+                        const users: OnlineUser[] = JSON.parse(message.body);
+                        setOnlineUsers(users);
+                    });
+                    stompClient.subscribe('/topic/logs', (message) => {
+                        const log: AuditLog = JSON.parse(message.body);
+                        setLogs((prevLogs) => [...prevLogs, log]);
+                    });
+                    subscribedRef.current = true;
+                }
+
+
+                // Send initial page update to server
+                const storedUsername = localStorage.getItem('username');
+                if (storedUsername) {
+                    stompClient.publish({
+                        destination: '/app/update-page',
+                        body: JSON.stringify({username: storedUsername, page: location.pathname}),
+                    });
+                }
+
+            },
+            onStompError: (frame) => {
+                setError(`Xato: ${frame.body}`);
+                // Token noto'g'ri bo'lsa, ulanishni to'xtatish
+                if (clientRef.current) {
+                    clientRef.current.deactivate();
+                    clientRef.current = null;
+                    subscribedRef.current = false;
+                }
+            },
+            onDisconnect: () => {
+                subscribedRef.current = false;
+            },
+        });
+
+        stompClient.activate();
+        clientRef.current = stompClient;
+    }, [isAuthenticated, location.pathname]);
 
     useEffect(() => {
-        if (isAuthenticated) {
-            connectWebSocket();
-        }
+
+        connectWebSocket();
+
+        // if (isAuthenticated) {
+        //     connectWebSocket();
+        // } else if (clientRef.current) {
+        //     clientRef.current.deactivate();
+        //     clientRef.current = null;
+        //     subscribedRef.current = false;
+        //     setOnlineUsers([]);
+        //     setLogs([]);
+        //     setError(null);
+        // }
 
         return () => {
             if (clientRef.current) {
@@ -98,7 +127,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         };
     }, [isAuthenticated, connectWebSocket]);
 
-    // Sahifa o'zgarishini backendga yuborish
     useEffect(() => {
         if (clientRef.current && clientRef.current.active && subscribedRef.current) {
             const username = localStorage.getItem('username');
@@ -111,7 +139,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
     }, [location.pathname]);
 
-    // Token o'zgarganda yoki storage change da reconnect
     useEffect(() => {
         const handleTokenChange = (event: StorageEvent) => {
             if (event.key === STORAGE_KEYS.ACCESS_TOKEN || event.key === STORAGE_KEYS.REFRESH_TOKEN) {
@@ -120,12 +147,14 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                     clientRef.current = null;
                     subscribedRef.current = false;
                 }
-                connectWebSocket();
+                if (isAuthenticated) {
+                    connectWebSocket();
+                }
             }
         };
         window.addEventListener('storage', handleTokenChange);
         return () => window.removeEventListener('storage', handleTokenChange);
-    }, [connectWebSocket]);
+    }, [isAuthenticated, connectWebSocket]);
 
     const value = { onlineUsers, logs, error };
 

@@ -34,7 +34,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
 
         try {
             await login(username, password);
-            await markAsLoggedIn(); // Await qilish
+            localStorage.setItem('username', username);
+            await markAsLoggedIn();
             if (onLoginSuccess) onLoginSuccess(username);
             navigate(from, { replace: true });
         } catch (err) {
@@ -70,7 +71,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ initialUsername = '', onLoginSucc
                     <div
                         className="text-red-600 bg-red-50 p-3 rounded-md mb-4 text-sm"
                         role="alert"
-                        aria-live="polite"
+                        aria-live="assertive"
                     >
                         {error}
                     </div>
