@@ -1,5 +1,6 @@
 import Table from '../components/table/Table';
 import type { Column } from '../components/table/useTable';
+import {ROUTES} from "@/utils/constants.ts";
 
 interface AuditType {
     id: number;
@@ -18,7 +19,7 @@ export default function AuditObjectTypesPage() {
 
     return (
         <Table<AuditType>
-            apiUrl="/audit-object-types"
+            apiUrl={ROUTES.AUDIT_OBJECT_TYPES}
             columns={columns}
         />
     );

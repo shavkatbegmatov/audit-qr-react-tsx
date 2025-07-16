@@ -13,6 +13,7 @@ const LazyLoginPage = lazy(() => import('@/pages/LoginPage'));
 const LazyDashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const LazyAuditObjectTypesPage = lazy(() => import('@/pages/AuditObjectTypesPage'));
 const LazyAuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
+const LazyRolesPage = lazy(() => import('@/pages/RolesPage'));
 
 function App() {
     return (
@@ -32,6 +33,10 @@ function App() {
                                     <Route
                                         path={ROUTES.AUDIT_LOGS}
                                         element={<LazyAuditLogsPage />}
+                                    />
+                                    <Route
+                                        path={ROUTES.ROLES}
+                                        element={<LazyRolesPage />}
                                     />
                                 </Route>
                             </Route>

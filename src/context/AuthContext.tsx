@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -7,6 +8,7 @@ import useAuthService from '@/services/authService';
 
 interface AuthContextType {
     isAuthenticated: boolean;
+    isAdmin: boolean;
     login: () => Promise<void>;
     logout: () => Promise<void>;
     isLoading: boolean;
@@ -28,6 +30,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const { logout: serviceLogout } = useAuthService();
     const navigate = useNavigate();
@@ -38,14 +41,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
             if (!token) {
                 setIsAuthenticated(false);
+                setIsAdmin(false);
                 return false;
             }
             const isValid = await validateToken(token);
-            setIsAuthenticated(isValid);
-            return isValid;
+            if (isValid) {
+                const decoded: { authorities?: string[] } = jwtDecode(token);
+                const roles = decoded.authorities || [];
+                setIsAdmin(roles.includes('ROLE_ADMIN'));
+                setIsAuthenticated(true);
+                return true;
+            } else {
+                setIsAuthenticated(false);
+                setIsAdmin(false);
+                return false;
+            }
         } catch (error) {
             console.error('Token validation failed:', error);
             setIsAuthenticated(false);
+            setIsAdmin(false);
             return false;
         } finally {
             setIsLoading(false);
@@ -114,17 +128,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const handleLogout = useCallback(async () => {
         await serviceLogout();
         setIsAuthenticated(false);
+        setIsAdmin(false);
         navigate(ROUTES.LOGIN, { replace: true });
     }, [serviceLogout, navigate]);
 
     const contextValue = useMemo(
         () => ({
             isAuthenticated,
+            isAdmin,
             login: handleLogin,
             logout: handleLogout,
             isLoading,
         }),
-        [isAuthenticated, handleLogin, handleLogout, isLoading]
+        [isAuthenticated, isAdmin, handleLogin, handleLogout, isLoading]
     );
 
     return (

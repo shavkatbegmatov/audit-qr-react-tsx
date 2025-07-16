@@ -16,5 +16,6 @@ export const ROUTES = {
     ROOT: '/',
     AUDIT_OBJECT_TYPES: '/audit-object-types',
     AUDIT_LOGS: '/audit-logs',
+    ROLES: '/roles',
     WILDCARD: '*',
 } as const;

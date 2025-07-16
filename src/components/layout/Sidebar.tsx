@@ -10,10 +10,13 @@ export default function Sidebar() {
                     <Link to={ROUTES.ROOT} className="hover:underline">Dashboard</Link>
                 </li>
                 <li>
-                    <Link to={ROUTES.AUDIT_OBJECT_TYPES} className="hover:underline">Audit Types</Link>
+                    <Link to={ROUTES.AUDIT_OBJECT_TYPES} className="hover:underline">Audit Object Types</Link>
                 </li>
                 <li>
                     <Link to={ROUTES.AUDIT_LOGS} className="hover:underline">Audit Logs</Link>
+                </li>
+                <li>
+                    <Link to={ROUTES.ROLES} className="hover:underline">Roles</Link>
                 </li>
             </ul>
         </nav>
