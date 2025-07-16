@@ -18,7 +18,7 @@ export default function AuditObjectTypesPage() {
 
     return (
         <Table<AuditType>
-            apiUrl="http://localhost:8080/api/audit-object-types"
+            apiUrl="http://localhost:8080/api/v1/audit-object-types"
             columns={columns}
         />
     );

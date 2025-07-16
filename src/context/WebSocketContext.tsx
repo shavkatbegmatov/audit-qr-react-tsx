@@ -53,8 +53,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             return;
         }
 
-        if (clientRef.current && clientRef.current.active) {
-            return;
+        if (clientRef.current) {
+            clientRef.current.deactivate();
+            clientRef.current = null;
+            subscribedRef.current = false;
         }
 
         const stompClient = new Client({
@@ -62,28 +64,32 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             connectHeaders: { Authorization: `Bearer ${token}` },
             reconnectDelay: 5000,
             onConnect: () => {
-                if (!subscribedRef.current) {
-                    stompClient.subscribe('/topic/online-users', (message) => {
-                        const users: OnlineUser[] = JSON.parse(message.body);
-                        setOnlineUsers(users);
-                    });
-                    stompClient.subscribe('/topic/logs', (message) => {
-                        const log: AuditLog = JSON.parse(message.body);
-                        setLogs((prevLogs) => [...prevLogs, log]);
-                    });
-                    subscribedRef.current = true;
-                }
+                console.log('WebSocket ulandi'); // Debug log
+                subscribedRef.current = false; // Force resubscribe
+                stompClient.subscribe('/topic/online-users', (message) => {
+                    const users: OnlineUser[] = JSON.parse(message.body);
+                    console.log('Online users received:', users); // Debug log
+                    setOnlineUsers(users);
+                });
+                stompClient.subscribe('/topic/logs', (message) => {
+                    const log: AuditLog = JSON.parse(message.body);
+                    setLogs((prevLogs) => [...prevLogs, log]);
+                });
+                subscribedRef.current = true;
 
+                // Force publish update-page after subscribe
                 const storedUsername = localStorage.getItem('username');
                 if (storedUsername) {
                     stompClient.publish({
                         destination: '/app/update-page',
-                        body: JSON.stringify({username: storedUsername, page: location.pathname}),
+                        body: JSON.stringify({ username: storedUsername, page: location.pathname }),
                     });
+                    console.log('Update page published after connect:', location.pathname); // Debug log
                 }
             },
             onStompError: (frame) => {
                 setError(`Xato: ${frame.body}`);
+                console.error('WebSocket error:', frame.body); // Debug log
                 if (clientRef.current) {
                     clientRef.current.deactivate();
                     clientRef.current = null;
@@ -100,7 +106,16 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }, [isAuthenticated, location.pathname]);
 
     useEffect(() => {
-        connectWebSocket();
+        if (isAuthenticated) {
+            connectWebSocket();
+        } else if (clientRef.current) {
+            clientRef.current.deactivate();
+            clientRef.current = null;
+            subscribedRef.current = false;
+            setOnlineUsers([]);
+            setLogs([]);
+            setError(null);
+        }
 
         return () => {
             if (clientRef.current) {
@@ -109,7 +124,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 subscribedRef.current = false;
             }
         };
-    }, [connectWebSocket]);
+    }, [isAuthenticated, connectWebSocket]);
 
     useEffect(() => {
         if (clientRef.current && clientRef.current.active && subscribedRef.current) {
@@ -119,9 +134,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                     destination: '/app/update-page',
                     body: JSON.stringify({ username, page: location.pathname }),
                 });
+                console.log('Page changed, update published:', location.pathname); // Debug log
             }
+        } else {
+            // If not connected, reconnect
+            connectWebSocket();
         }
-    }, [location.pathname]);
+    }, [location.pathname, connectWebSocket]);
 
     useEffect(() => {
         const handleTokenChange = (event: StorageEvent) => {
@@ -151,7 +170,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             }
         }, 5000);
 
-        // Yangi: Tab visibility change da token tekshirish
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
