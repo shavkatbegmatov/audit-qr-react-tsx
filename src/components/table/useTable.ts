@@ -1,6 +1,6 @@
 // src/components/table/useTable.ts
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import api from '@/services/api'  // Import the custom axios instance
 
 export interface Column<T> {
     key: keyof T
@@ -41,10 +41,10 @@ export default function useTable<T>({
                 params.sort = `${String(sortKey)},${sortOrder}`
             }
 
-            const res = await axios.get<any>(apiUrl, { params })
-            // Agar Spring paged response bo‘lsa:
-            if (res.data.content && typeof res.data.totalElements === 'number') {
-                let items: T[] = res.data.content
+            const res = await api.get<any>(apiUrl, { params })
+            // Agar CrudResponse bo‘lsa va paged content bo'lsa:
+            if (res.data.success && res.data.data?.content && typeof res.data.meta?.totalElements === 'number') {
+                let items: T[] = res.data.data.content
 
                 // **Mijoz tomonida ham sort**
                 if (sortKey) {
@@ -61,11 +61,11 @@ export default function useTable<T>({
                     })
                 }
 
-                setTotal(res.data.totalElements)
+                setTotal(res.data.meta.totalElements)
                 setData(items)
-            } else {
+            } else if (res.data.success && Array.isArray(res.data.data)) {
                 // Fallback: oddiy ro‘yxat
-                let items: T[] = res.data
+                let items: T[] = res.data.data
                 if (sortKey) {
                     items = [...items].sort((a, b) => {
                         const aVal = a[sortKey], bVal = b[sortKey]
@@ -81,9 +81,15 @@ export default function useTable<T>({
                 }
                 setTotal(items.length)
                 setData(items)
+            } else {
+                console.error('Unexpected response format:', res.data)
+                setData([])
+                setTotal(0)
             }
         } catch (err) {
             console.error(err)
+            setData([])
+            setTotal(0)
         } finally {
             setLoading(false)
         }
@@ -94,9 +100,9 @@ export default function useTable<T>({
     }, [fetchData])
 
     // CRUD ops
-    const createItem  = async (item: Partial<T>) => { await axios.post(apiUrl, item); fetchData() }
-    const updateItem  = async (id: any, item: Partial<T>) => { await axios.put(`${apiUrl}/${id}`, item); fetchData() }
-    const deleteItem  = async (id: any) => { await axios.delete(`${apiUrl}/${id}`); fetchData() }
+    const createItem  = async (item: Partial<T>) => { await api.post(apiUrl, item); fetchData() }
+    const updateItem  = async (id: any, item: Partial<T>) => { await api.put(`${apiUrl}/${id}`, item); fetchData() }
+    const deleteItem  = async (id: any) => { await api.delete(`${apiUrl}/${id}`); fetchData() }
 
     // Handlers
     const onSearch     = (q: string) => { setSearch(q); setPage(1) }
