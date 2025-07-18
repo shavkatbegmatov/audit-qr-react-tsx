@@ -9,7 +9,7 @@ interface CreateModalProps<T extends { id: any }> {
     columns: Column<T>[];
 }
 
-export default function CreateModal<T>({ visible, onSubmit, onClose, columns }: CreateModalProps<T>) {
+export default function CreateModal<T extends { id: any }>({ visible, onSubmit, onClose, columns }: CreateModalProps<T>) {
     if (!visible) return null;
 
     const [formData, setFormData] = useState<Partial<T>>({});

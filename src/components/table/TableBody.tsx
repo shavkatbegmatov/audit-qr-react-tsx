@@ -9,7 +9,7 @@ interface BodyProps<T extends { id: any }> {
     loading: boolean;
 }
 
-export default function TableBody<T>({ data, columns, onEdit, onDelete, loading }: BodyProps<T>) {
+export default function TableBody<T extends { id: any }>({ data, columns, onEdit, onDelete, loading }: BodyProps<T>) {
     if (loading) {
         return (
             <tbody>

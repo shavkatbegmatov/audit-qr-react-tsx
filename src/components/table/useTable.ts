@@ -14,10 +14,10 @@ export interface TableParams<T> {
     columns: Column<T>[];
 }
 
-export default function useTable<T>({
-                                        apiUrl,
-                                        pageSize = 10
-                                    }: TableParams<T>) {
+export default function useTable<T extends { id: any }>({
+    apiUrl,
+    pageSize = 10
+}: TableParams<T>) {
     const [data, setData] = useState<T[]>([])
     const [loading, setLoading] = useState(false)
     const [page, setPage] = useState(1)

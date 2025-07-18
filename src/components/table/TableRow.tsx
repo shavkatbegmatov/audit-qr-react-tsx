@@ -7,7 +7,7 @@ interface RowProps<T extends { id: any }> {
     onDelete: (id: any) => void;
 }
 
-export default function TableRow<T>({ item, columns, onEdit, onDelete }: RowProps<T>) {
+export default function TableRow<T extends { id: any }>({ item, columns, onEdit, onDelete }: RowProps<T>) {
     return (
         <tr className="hover:bg-gray-100">
             {columns.map(col => (
