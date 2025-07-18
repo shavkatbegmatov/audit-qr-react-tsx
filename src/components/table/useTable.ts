@@ -3,14 +3,15 @@ import { useState, useEffect, useCallback } from 'react'
 import api from '@/services/api'  // Import the custom axios instance
 
 export interface Column<T> {
-    key: keyof T
-    label: string
-    sortable?: boolean
+    key: keyof T;
+    label: string;
+    sortable?: boolean;
 }
 
 export interface TableParams<T> {
-    apiUrl: string
-    pageSize?: number
+    apiUrl: string;
+    pageSize?: number;
+    columns: Column<T>[];
 }
 
 export default function useTable<T>({

@@ -1,7 +1,7 @@
 // src/pages/RolesPage.tsx
 import Table from '../components/table/Table';
 import type { Column } from '../components/table/useTable';
-import {ROUTES} from "@/utils/constants.ts";
+import { ROUTES } from "@/utils/constants.ts";
 
 interface RoleType {
     id: number;

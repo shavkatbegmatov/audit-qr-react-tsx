@@ -1,7 +1,7 @@
 import TableRow from './TableRow';
 import type { Column } from './useTable';
 
-interface BodyProps<T> {
+interface BodyProps<T extends { id: any }> {
     data: T[];
     columns: Column<T>[];
     onEdit: (id: any, item: Partial<T>) => void;

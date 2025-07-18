@@ -1,6 +1,6 @@
 import type { Column } from './useTable';
 
-interface RowProps<T> {
+interface RowProps<T extends { id: any }> {
     item: T;
     columns: Column<T>[];
     onEdit: (id: any, item: Partial<T>) => void;

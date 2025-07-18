@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import type { Column } from './useTable';
 
-interface CreateModalProps<T> {
+interface CreateModalProps<T extends { id: any }> {
     visible: boolean;
     onSubmit: (item: Partial<T>) => Promise<void>;
     onClose: () => void;
