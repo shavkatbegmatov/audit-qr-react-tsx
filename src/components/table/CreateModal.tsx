@@ -14,11 +14,12 @@
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 // Tugmalar: variant bilan ishlaydi (className o'rniga).
 
-import { useState, useEffect } from 'react';
-import type { Column } from './useTable';
+import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
+import type { Column } from './useTable';  // Jadval ustun tipi
 import ConfirmModal from '@/components/layout/ConfirmModal';  // Tasdiq modalini import qilamiz
 import Button from '@/components/ui/Button';  // Universal Button komponentini import qilamiz
 
+// Komponent interfeysi: Props'larni belgilaydi
 interface CreateModalProps<T extends { id: number }> {
     visible: boolean;  // Modal ochiq yoki yo'q
     onSubmit: (item: Partial<T>) => Promise<void>;  // Saqlash funksiyasi
@@ -26,76 +27,78 @@ interface CreateModalProps<T extends { id: number }> {
     columns: Column<T>[];  // Jadval ustunlari (maydonlar)
 }
 
+// Komponent: CreateModal
 export default function CreateModal<T extends { id: number }>({ visible, onSubmit, onClose, columns }: CreateModalProps<T>) {
-    // Form ma'lumotlarini saqlash uchun state
+    // Form ma'lumotlarini saqlash uchun state (bo'sh ob'ekt bilan boshlanadi)
     const [formData, setFormData] = useState<Partial<T>>({});
 
-    // Yopishni tasdiqlash uchun state
+    // Yopishni tasdiqlash uchun state (dastlab false)
     const [showConfirmClose, setShowConfirmClose] = useState(false);
 
-    // Modal ochilganda formData ni bo'shatish (reset)
+    // Modal ochilganda formData ni bo'shatish (reset) uchun effect
     useEffect(() => {
         if (visible) {
             setFormData({});  // Har safar modal ochilganda bo'sh qilamiz
         }
-    }, [visible]);
+    }, [visible]);  // visible o'zgarganda ishlaydi
 
-    // Maydon qiymatini o'zgartirish funksiyasi
+    // Maydon qiymatini o'zgartirish funksiyasi: Inputdan kelayotgan qiymatni formData ga qo'shadi
     const handleChange = (key: keyof T, value: string) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
-    // Saqlash funksiyasi
+    // Saqlash funksiyasi: "Yaratish" tugmasi bosilganda ishlaydi
     const handleSubmit = async () => {
-        await onSubmit(formData);
-        onClose();
+        await onSubmit(formData);  // Ma'lumotlarni saqlaydi
+        onClose();  // Modalni yopadi
     };
 
-    // Modalni yopish: Agar o'zgarish bo'lsa, tasdiq so'ra
+    // Modalni yopish funksiyasi: Agar forma to'ldirilgan bo'lsa, tasdiq so'raydi
     const handleClose = () => {
-        if (Object.keys(formData).length > 0) {
-            setShowConfirmClose(true);
+        if (Object.keys(formData).length > 0) {  // Forma bo'sh emasmi?
+            setShowConfirmClose(true);  // Tasdiq oynasini och
         } else {
-            onClose();
+            onClose();  // To'g'ridan yop
         }
     };
 
-    // Tasdiq bilan yopish
+    // Tasdiq bilan yopish: Tasdiq oynasidagi "Ha" tugmasi
     const confirmClose = () => {
-        setShowConfirmClose(false);
-        onClose();
+        setShowConfirmClose(false);  // Tasdiq oynasini yop
+        onClose();  // Modalni yop
     };
 
-    // Tasdiqni bekor qilish
+    // Tasdiqni bekor qilish: Tasdiq oynasidagi "Yo'q" tugmasi
     const cancelClose = () => {
-        setShowConfirmClose(false);
+        setShowConfirmClose(false);  // Tasdiq oynasini yop, modal qoladi
     };
 
-    // ESC klavishasini eshitish uchun effect
+    // ESC klavishasini eshitish uchun effect: Modal ochiq bo'lganda faol
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                handleClose();
+            if (event.key === 'Escape') {  // ESC bosilsa
+                handleClose();  // Yopishni boshla
             }
         };
 
-        if (visible) {
-            document.addEventListener('keydown', handleKeyDown);
+        if (visible) {  // Modal ochiq bo'lsa
+            document.addEventListener('keydown', handleKeyDown);  // Klaviatura eshitishni qo'sh
         }
 
         return () => {
-            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('keydown', handleKeyDown);  // Tozalash
         };
-    }, [visible, formData]);  // formData o'zgarganda qayta tekshirish uchun
+    }, [visible, formData]);  // visible va formData o'zgarganda qayta ishlaydi
 
-    // Agar modal ochiq bo'lmasa, hech narsa ko'rsatma
+    // Agar modal ochiq bo'lmasa, hech narsa ko'rsatma (early return)
     if (!visible) return null;
 
+    // UI: Modalning asosiy qismi
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  // Orqa fon: Qora yarim shaffof va blur effekti
             <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">  // Modal: To'liq oq, blur yo'q
                 <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Yangi Element Yaratish ✨</h2>
-                <form>
+                <form>  // Forma elementi
                     {/* ID ni read-only ko'rsatish (create da auto-generated deb) */}
                     <div className="mb-5">
                         <label className="block mb-2 text-sm font-semibold text-gray-800">ID</label>
@@ -107,26 +110,26 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                             readOnly
                         />
                     </div>
-                    {columns.filter(col => col.key !== 'id').map(col => (
+                    {columns.filter(col => col.key !== 'id').map(col => (  // Har bir column uchun input yaratish, id dan tashqari
                         <div key={String(col.key)} className="mb-5">
                             <label className="block mb-2 text-sm font-semibold text-gray-800">{col.label}</label>
                             <input
                                 type="text"
                                 className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
-                                onChange={e => handleChange(col.key, e.target.value)}
+                                onChange={e => handleChange(col.key, e.target.value)}  // Qiymat o'zgarganda handleChange chaqiriladi
                             />
                         </div>
                     ))}
-                    <div className="flex justify-end space-x-4 mt-8">
+                    <div className="flex justify-end space-x-4 mt-8">  // Tugmalar qatori
                         <Button
-                            onClick={handleClose}
                             variant="danger"  // Qizilsimon (danger)
+                            onClick={handleClose}
                         >
                             Bekor Qilish
                         </Button>
                         <Button
-                            onClick={handleSubmit}
                             variant="primary"  // Yashilsimon (primary)
+                            onClick={handleSubmit}
                         >
                             Yaratish
                         </Button>
