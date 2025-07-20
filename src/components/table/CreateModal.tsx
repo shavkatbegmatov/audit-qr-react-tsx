@@ -14,12 +14,15 @@
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 // Tugmalar: variant bilan ishlaydi (className o'rniga).
 // Status maydoni: ACTIVE yoki INACTIVE bo'ladi, select bilan tanlanadi (agar column key 'status' bo'lsa).
-// Tuzatish: Default 'status' faqat agar 'status' columnbo'lsa qo'shiladi (bo'sh yuborilmaslik uchun, va unrecognized field oldini olish uchun).
+// Tuzatish: Status default 'ACTIVE' qilib formData da oldindan o'rnatiladi (bo'sh yuborilmaslik uchun).
+// Yangi tuzatish: Submit da try-catch bilan xatolikni tutib, modalda ko'rsatish va to'ster bilan xabar berish.
+// Modal success bo'lmaguncha yopilmaydi. To'ster uchun react-hot-toast ishlatilgan (import qo'shing).
 
 import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
 import type { Column } from './useTable';  // Jadval ustun tipi
 import ConfirmModal from '@/components/layout/ConfirmModal';  // Tasdiq modalini import qilamiz
 import Button from '@/components/ui/Button';  // Universal Button komponentini import qilamiz
+import toast from 'react-hot-toast';  // To'ster uchun import (react-hot-toast library si o'rnatilgan deb faraz qilamiz)
 
 // Komponent interfeysi: Props'larni belgilaydi
 interface CreateModalProps<T extends { id: number }> {
@@ -37,6 +40,9 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
     // Yopishni tasdiqlash uchun state (dastlab false)
     const [showConfirmClose, setShowConfirmClose] = useState(false);
 
+    // Xatolik xabarini saqlash uchun state (backend xatolari uchun)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
     // 'status' column borligini tekshirish
     const hasStatusColumn = columns.some(col => col.key === 'status');
 
@@ -48,6 +54,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                 initialData.status = 'ACTIVE' as any;  // Default 'ACTIVE' faqat status bo'lsa
             }
             setFormData(initialData);
+            setErrorMessage(null);  // Har ochilganda xatolikni tozalash
         }
     }, [visible, hasStatusColumn]);  // visible va hasStatusColumn o'zgarganda ishlaydi
 
@@ -58,8 +65,18 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
 
     // Saqlash funksiyasi: "Yaratish" tugmasi bosilganda ishlaydi
     const handleSubmit = async () => {
-        await onSubmit(formData);  // Ma'lumotlarni saqlaydi
-        onClose();  // Modalni yopadi
+        setErrorMessage(null);  // Oldingi xatolikni tozalash
+        try {
+            await onSubmit(formData);  // Ma'lumotlarni saqlashga urinish
+            toast.success('Muvaffaqiyatli yaratildi!');  // Success to'ster
+            onClose();  // Success bo'lsa modalni yop
+        } catch (error) {
+            // Xatolikni tutish va ko'rsatish
+            const errMsg = error.response?.data?.error?.message || 'Xatolik yuz berdi';
+            setErrorMessage(errMsg);  // Modalda xatolikni ko'rsat
+            toast.error(errMsg);  // Fail to'ster
+            // Modal yopilmaydi
+        }
     };
 
     // Modalni yopish funksiyasi: Agar forma to'ldirilgan bo'lsa, tasdiq so'raydi
@@ -141,6 +158,10 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                             )}
                         </div>
                     ))}
+                    {/* Xatolik xabari (agar bo'lsa) */}
+                    {errorMessage && (
+                        <p className="text-red-500 mb-4">{errorMessage}</p>
+                    )}
                     <div className="flex justify-end space-x-4 mt-8">  // Tugmalar qatori
                         <Button
                             variant="danger"  // Qizilsimon (danger)
