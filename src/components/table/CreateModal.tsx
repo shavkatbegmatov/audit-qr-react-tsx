@@ -13,7 +13,7 @@
 // Import o'zgartirish: '@/components/ConfirmModal' -> '@/components/layout/ConfirmModal'
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 // Tugmalar: variant bilan ishlaydi (className o'rniga).
-// O'zbek tiliga o'girish: Barcha matnlar (sarlavhalar, tugma nomlari, xabarlar) o'zbek tilida.
+// Status maydoni: ACTIVE yoki PASSIVE bo'ladi, select bilan tanlanadi (agar column key 'status' bo'lsa).
 
 import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
 import type { Column } from './useTable';  // Jadval ustun tipi
@@ -43,7 +43,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
         }
     }, [visible]);  // visible o'zgarganda ishlaydi
 
-    // Maydon qiymatini o'zgartirish funksiyasi: Inputdan kelayotgan qiymatni formData ga qo'shadi
+    // Maydon qiymatini o'zgartirish funksiyasi: Input yoki select dan kelayotgan qiymatni formData ga qo'shadi
     const handleChange = (key: keyof T, value: string) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
@@ -96,9 +96,12 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
 
     // UI: Modalning asosiy qismi
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  // Orqa fon: Qora yarim shaffof va blur effekti
+        // Orqa fon: Qora yarim shaffof va blur effekti
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">
+            {/* Modal: To'liq oq, blur yo'q */}
             <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">
                 <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Yangi Element Yaratish ✨</h2>
+                {/* Forma elementi */}
                 <form>
                     {/* ID ni read-only ko'rsatish (create da auto-generated deb) */}
                     <div className="mb-5">
@@ -111,16 +114,29 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                             readOnly
                         />
                     </div>
-                    {columns.filter(col => col.key !== 'id').map(col => (  // Har bir column uchun input yaratish, id dan tashqari
+                    {columns.filter(col => col.key !== 'id').map(col => (
                         <div key={String(col.key)} className="mb-5">
                             <label className="block mb-2 text-sm font-semibold text-gray-800">{col.label}</label>
-                            <input
-                                type="text"
-                                className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
-                                onChange={e => handleChange(col.key, e.target.value)}  // Qiymat o'zgarganda handleChange chaqiriladi
-                            />
+                            {/* Agar key 'status' bo'lsa, select bilan ACTIVE/PASSIVE tanlash */}
+                            {col.key === 'status' ? (
+                                <select
+                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                    value={String(formData[col.key] ?? 'ACTIVE')}  // Default ACTIVE
+                                    onChange={e => handleChange(col.key, e.target.value)}
+                                >
+                                    <option value="ACTIVE">ACTIVE</option>
+                                    <option value="PASSIVE">PASSIVE</option>
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                    onChange={e => handleChange(col.key, e.target.value)}
+                                />
+                            )}
                         </div>
                     ))}
+                    {/* Tugmalar qatori */}
                     <div className="flex justify-end space-x-4 mt-8">
                         <Button
                             variant="danger"  // Qizilsimon (danger)
