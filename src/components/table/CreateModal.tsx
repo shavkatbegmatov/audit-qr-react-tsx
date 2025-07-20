@@ -5,6 +5,7 @@
 // Modal dizayni: Gradient fon, animatsiya, chiroyli tugmalar.
 // ESC bosilganda: Agar o'zgarish bo'lsa, tasdiq so'raydi (ConfirmModal orqali).
 // Pointer: Tugmalarda cursor-pointer qo'shilgan.
+// Muammo tuzatish: Visible o'zgarganda formData ni reset qilish (bo'sh qilish).
 
 import { useState, useEffect } from 'react';
 import type { Column } from './useTable';
@@ -23,6 +24,13 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
 
     // Yopishni tasdiqlash uchun state
     const [showConfirmClose, setShowConfirmClose] = useState(false);
+
+    // Modal ochilganda formData ni bo'shatish (reset)
+    useEffect(() => {
+        if (visible) {
+            setFormData({});  // Har safar modal ochilganda bo'sh qilamiz
+        }
+    }, [visible]);
 
     // Maydon qiymatini o'zgartirish funksiyasi
     const handleChange = (key: keyof T, value: string) => {
