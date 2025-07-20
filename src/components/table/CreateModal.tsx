@@ -12,6 +12,7 @@
 // Orqa fon: bg-black bg-opacity-50 backdrop-blur-md bilan qora yarim shaffof va blur effekti.
 // Import o'zgartirish: '@/components/ConfirmModal' -> '@/components/layout/ConfirmModal'
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
+// Tugmalar: variant bilan ishlaydi (className o'rniga).
 
 import { useState, useEffect } from 'react';
 import type { Column } from './useTable';
@@ -119,13 +120,13 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                     <div className="flex justify-end space-x-4 mt-8">
                         <Button
                             onClick={handleClose}
-                            className="bg-red-300 text-gray-800 hover:bg-red-400"  // Qizilsimon
+                            variant="danger"  // Qizilsimon (danger)
                         >
                             Bekor Qilish
                         </Button>
                         <Button
                             onClick={handleSubmit}
-                            className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"  // Yashilsimon
+                            variant="primary"  // Yashilsimon (primary)
                         >
                             Yaratish
                         </Button>
