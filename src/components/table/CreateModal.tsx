@@ -13,7 +13,7 @@
 // Import o'zgartirish: '@/components/ConfirmModal' -> '@/components/layout/ConfirmModal'
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 // Tugmalar: variant bilan ishlaydi (className o'rniga).
-// Status maydoni: ACTIVE yoki PASSIVE bo'ladi, select bilan tanlanadi (agar column key 'status' bo'lsa).
+// Status maydoni: ACTIVE yoki INACTIVE bo'ladi, select bilan tanlanadi (agar column key 'status' bo'lsa).
 
 import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
 import type { Column } from './useTable';  // Jadval ustun tipi
@@ -117,7 +117,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                     {columns.filter(col => col.key !== 'id').map(col => (
                         <div key={String(col.key)} className="mb-5">
                             <label className="block mb-2 text-sm font-semibold text-gray-800">{col.label}</label>
-                            {/* Agar key 'status' bo'lsa, select bilan ACTIVE/PASSIVE tanlash */}
+                            {/* Agar key 'status' bo'lsa, select bilan ACTIVE/INACTIVE tanlash */}
                             {col.key === 'status' ? (
                                 <select
                                     className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
@@ -125,7 +125,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                                     onChange={e => handleChange(col.key, e.target.value)}
                                 >
                                     <option value="ACTIVE">ACTIVE</option>
-                                    <option value="PASSIVE">PASSIVE</option>
+                                    <option value="INACTIVE">INACTIVE</option>
                                 </select>
                             ) : (
                                 <input

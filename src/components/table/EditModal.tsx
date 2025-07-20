@@ -12,6 +12,7 @@
 // Orqa fon: bg-black bg-opacity-50 backdrop-blur-md bilan qora yarim shaffof va blur effekti.
 // Import o'zgartirish: '@/components/ConfirmModal' -> '@/components/layout/ConfirmModal'
 // Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
+// Status maydoni: ACTIVE yoki INACTIVE bo'ladi, select bilan tanlanadi (agar column key 'status' bo'lsa).
 
 import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
 import type { Column } from './useTable';  // Jadval ustun tipi
@@ -102,11 +103,13 @@ export default function EditModal<T extends { id: number }>({ visible, item, onS
     // Agar modal ochiq bo'lmasa yoki item null bo'lsa, hech narsa ko'rsatma (early return)
     if (!visible || !item) return null;
 
+    // UI: Modalning asosiy qismi
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">
-            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  // Orqa fon: Qora yarim shaffof va blur effekti
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">  // Modal: To'liq oq, blur yo'q
                 <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Elementni Tahrirlash ✨</h2>
-                <form>
+                <form>  // Forma elementi
+                    {/* ID ni read-only ko'rsatish */}
                     <div className="mb-5">
                         <label className="block mb-2 text-sm font-semibold text-gray-800">ID</label>
                         <input
@@ -120,23 +123,35 @@ export default function EditModal<T extends { id: number }>({ visible, item, onS
                     {columns.filter(col => col.key !== 'id').map(col => (
                         <div key={String(col.key)} className="mb-5">
                             <label className="block mb-2 text-sm font-semibold text-gray-800">{col.label}</label>
-                            <input
-                                type="text"
-                                className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
-                                value={String(formData[col.key] ?? '')}
-                                onChange={e => handleChange(col.key, e.target.value)}
-                            />
+                            {/* Agar key 'status' bo'lsa, select bilan ACTIVE/INACTIVE tanlash */}
+                            {col.key === 'status' ? (
+                                <select
+                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                    value={String(formData[col.key] ?? 'ACTIVE')}  // Default ACTIVE
+                                    onChange={e => handleChange(col.key, e.target.value)}
+                                >
+                                    <option value="ACTIVE">ACTIVE</option>
+                                    <option value="INACTIVE">INACTIVE</option>
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                    value={String(formData[col.key] ?? '')}
+                                    onChange={e => handleChange(col.key, e.target.value)}
+                                />
+                            )}
                         </div>
                     ))}
-                    <div className="flex justify-end space-x-4 mt-8">
+                    <div className="flex justify-end space-x-4 mt-8">  // Tugmalar qatori
                         <Button
-                            variant="danger"
+                            variant="danger"  // Qizilsimon (danger)
                             onClick={handleClose}
                         >
                             Bekor Qilish
                         </Button>
                         <Button
-                            variant="primary"
+                            variant="primary"  // Yashilsimon (primary)
                             onClick={handleSubmit}
                         >
                             Saqlash
@@ -145,6 +160,7 @@ export default function EditModal<T extends { id: number }>({ visible, item, onS
                 </form>
             </div>
 
+            {/* Tasdiq modal oynasi */}
             <ConfirmModal
                 isOpen={showConfirmClose}
                 onConfirm={confirmClose}
