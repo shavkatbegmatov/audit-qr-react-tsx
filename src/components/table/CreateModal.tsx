@@ -8,10 +8,15 @@
 // Muammo tuzatish: Visible o'zgarganda formData ni reset qilish (bo'sh qilish).
 // Yangi o'zgarishlar: Fon sal blur bilan orqa narsalar ko'rinib turishi uchun backdrop-blur-md va bg-opacity-50 qo'shilgan.
 // Bekor qilish tugmasi qizilsimon (red-300), Yaratish tugmasi yashilsimon (green-500).
+// Tuzatish: Modal o'zi kulrang bo'lib qolmasligi uchun bg-white/80 ni bg-white ga o'zgartirdim.
+// Orqa fon: bg-black bg-opacity-50 backdrop-blur-md bilan qora yarim shaffof va blur effekti.
+// Import o'zgartirish: '@/components/ConfirmModal' -> '@/components/layout/ConfirmModal'
+// Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 
 import { useState, useEffect } from 'react';
 import type { Column } from './useTable';
 import ConfirmModal from '@/components/layout/ConfirmModal';  // Tasdiq modalini import qilamiz
+import Button from '@/components/ui/Button';  // Universal Button komponentini import qilamiz
 
 interface CreateModalProps<T extends { id: number }> {
     visible: boolean;  // Modal ochiq yoki yo'q
@@ -86,8 +91,8 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
     if (!visible) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  {/* Fon: Qora, yarim shaffof, blur effekti bilan orqa narsalar ko'rinib turadi */}
-            <div className="bg-white/80 backdrop-blur-lg p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-white/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  // Orqa fon: Qora yarim shaffof va blur effekti
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">  // Modal: To'liq oq, blur yo'q
                 <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Yangi Element Yaratish ✨</h2>
                 <form>
                     {/* ID ni read-only ko'rsatish (create da auto-generated deb) */}
@@ -112,24 +117,23 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                         </div>
                     ))}
                     <div className="flex justify-end space-x-4 mt-8">
-                        <button
-                            type="button"
+                        <Button
                             onClick={handleClose}
-                            className="px-6 py-3 bg-red-300 text-gray-800 rounded-xl hover:bg-red-400 transition duration-300 cursor-pointer shadow-md hover:shadow-lg"
+                            className="bg-red-300 text-gray-800 hover:bg-red-400"  // Qizilsimon
                         >
                             Bekor Qilish
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={handleSubmit}
-                            className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition duration-300 cursor-pointer shadow-md hover:shadow-lg"
+                            className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"  // Yashilsimon
                         >
                             Yaratish
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
 
+            {/* Tasdiq modal oynasi */}
             <ConfirmModal
                 isOpen={showConfirmClose}
                 onConfirm={confirmClose}
