@@ -14,6 +14,7 @@
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 // Tugmalar: variant bilan ishlaydi (className o'rniga).
 // Status maydoni: ACTIVE yoki INACTIVE bo'ladi, select bilan tanlanadi (agar column key 'status' bo'lsa).
+// Tuzatish: Status default 'ACTIVE' qilib formData da oldindan o'rnatiladi (bo'sh yuborilmaslik uchun).
 
 import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
 import type { Column } from './useTable';  // Jadval ustun tipi
@@ -36,10 +37,10 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
     // Yopishni tasdiqlash uchun state (dastlab false)
     const [showConfirmClose, setShowConfirmClose] = useState(false);
 
-    // Modal ochilganda formData ni bo'shatish (reset) uchun effect
+    // Modal ochilganda formData ni bo'shatish va default status ni o'rnatish uchun effect
     useEffect(() => {
         if (visible) {
-            setFormData({});  // Har safar modal ochilganda bo'sh qilamiz
+            setFormData({ status: 'ACTIVE' } as Partial<T>);  // Har safar modal ochilganda bo'sh qilamiz va status ni default 'ACTIVE' qilamiz
         }
     }, [visible]);  // visible o'zgarganda ishlaydi
 
@@ -96,13 +97,10 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
 
     // UI: Modalning asosiy qismi
     return (
-        // Orqa fon: Qora yarim shaffof va blur effekti
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">
-            {/* Modal: To'liq oq, blur yo'q */}
-            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  // Orqa fon: Qora yarim shaffof va blur effekti
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">  // Modal: To'liq oq, blur yo'q
                 <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Yangi Element Yaratish ✨</h2>
-                {/* Forma elementi */}
-                <form>
+                <form>  // Forma elementi
                     {/* ID ni read-only ko'rsatish (create da auto-generated deb) */}
                     <div className="mb-5">
                         <label className="block mb-2 text-sm font-semibold text-gray-800">ID</label>
@@ -136,8 +134,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                             )}
                         </div>
                     ))}
-                    {/* Tugmalar qatori */}
-                    <div className="flex justify-end space-x-4 mt-8">
+                    <div className="flex justify-end space-x-4 mt-8">  // Tugmalar qatori
                         <Button
                             variant="danger"  // Qizilsimon (danger)
                             onClick={handleClose}
