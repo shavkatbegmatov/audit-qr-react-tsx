@@ -7,7 +7,7 @@ import TableHeader from './TableHeader';
 import TableBody from './TableBody';
 import TablePagination from './TablePagination';
 import CreateModal from './CreateModal';
-import EditModal from './EditModal';  // Import qo'shing
+import EditModal from './EditModal';
 
 interface TableProps<T extends { id: number }> {
     apiUrl: string;
@@ -23,7 +23,7 @@ export default function Table<T extends { id: number }>({ apiUrl, columns }: Tab
     } = useTable<T>({ apiUrl, pageSize: 10, columns });
 
     const [showCreate, setShowCreate] = useState(false);
-    const [editItem, setEditItem] = useState<Partial<T> | null>(null);  // Edit state qo'shing
+    const [editItem, setEditItem] = useState<Partial<T> | null>(null);
 
     const openCreate = () => setShowCreate(true);
     const closeCreate = () => setShowCreate(false);
@@ -32,7 +32,7 @@ export default function Table<T extends { id: number }>({ apiUrl, columns }: Tab
         closeCreate();
     };
 
-    const openEdit = (item: T) => setEditItem(item);  // Edit ochish
+    const openEdit = (item: T) => setEditItem(item);
     const closeEdit = () => setEditItem(null);
     const handleEdit = async (updated: Partial<T>) => {
         if (updated.id) {
