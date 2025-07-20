@@ -19,13 +19,13 @@ export default function TableRow<T extends { id: number }>({ item, columns, onEd
             ))}
             <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
                 <Button
-                    variant="secondary"  // Secondary variant (masalan, oddiy ko'rinish)
+                    variant="secondary"
                     onClick={() => onEdit(item)}
                 >
                     ✏️ Edit
                 </Button>
                 <Button
-                    variant="danger"  // Danger variant (qizil rang)
+                    variant="danger"
                     onClick={() => onDelete(item.id)}
                 >
                     🗑️ Delete
