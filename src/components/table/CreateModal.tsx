@@ -6,6 +6,8 @@
 // ESC bosilganda: Agar o'zgarish bo'lsa, tasdiq so'raydi (ConfirmModal orqali).
 // Pointer: Tugmalarda cursor-pointer qo'shilgan.
 // Muammo tuzatish: Visible o'zgarganda formData ni reset qilish (bo'sh qilish).
+// Yangi o'zgarishlar: Fon sal blur bilan orqa narsalar ko'rinib turishi uchun backdrop-blur-md va bg-opacity-50 qo'shilgan.
+// Bekor qilish tugmasi qizilsimon (red-300), Yaratish tugmasi yashilsimon (green-500).
 
 import { useState, useEffect } from 'react';
 import type { Column } from './useTable';
@@ -84,7 +86,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
     if (!visible) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  {/* Fon: Qora, yarim shaffof, blur effekti bilan orqa narsalar ko'rinib turadi */}
             <div className="bg-white/80 backdrop-blur-lg p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-white/50">
                 <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Yangi Element Yaratish ✨</h2>
                 <form>
@@ -113,14 +115,14 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                         <button
                             type="button"
                             onClick={handleClose}
-                            className="px-6 py-3 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400 transition duration-300 cursor-pointer shadow-md hover:shadow-lg"
+                            className="px-6 py-3 bg-red-300 text-gray-800 rounded-xl hover:bg-red-400 transition duration-300 cursor-pointer shadow-md hover:shadow-lg"
                         >
                             Bekor Qilish
                         </button>
                         <button
                             type="button"
                             onClick={handleSubmit}
-                            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition duration-300 cursor-pointer shadow-md hover:shadow-lg"
+                            className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition duration-300 cursor-pointer shadow-md hover:shadow-lg"
                         >
                             Yaratish
                         </button>
@@ -128,7 +130,6 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                 </form>
             </div>
 
-            {/* Tasdiq modal oynasi */}
             <ConfirmModal
                 isOpen={showConfirmClose}
                 onConfirm={confirmClose}
