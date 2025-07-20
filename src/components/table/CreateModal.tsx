@@ -96,9 +96,9 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
     // UI: Modalning asosiy qismi
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">  // Orqa fon: Qora yarim shaffof va blur effekti
-            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">  // Modal: To'liq oq, blur yo'q
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-gray-200">
                 <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Yangi Element Yaratish ✨</h2>
-                <form>  // Forma elementi
+                <form>
                     {/* ID ni read-only ko'rsatish (create da auto-generated deb) */}
                     <div className="mb-5">
                         <label className="block mb-2 text-sm font-semibold text-gray-800">ID</label>
@@ -120,7 +120,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                             />
                         </div>
                     ))}
-                    <div className="flex justify-end space-x-4 mt-8">  // Tugmalar qatori
+                    <div className="flex justify-end space-x-4 mt-8">  {/* Tugmalar qatori */}
                         <Button
                             variant="danger"  // Qizilsimon (danger)
                             onClick={handleClose}
