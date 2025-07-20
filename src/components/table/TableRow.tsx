@@ -1,5 +1,6 @@
 // src/components/table/TableRow.tsx
 import type { Column } from './useTable';
+import Button from '@/components/ui/Button';  // Universal Button import qilindi
 
 interface RowProps<T extends { id: number }> {
     item: T;
@@ -17,8 +18,18 @@ export default function TableRow<T extends { id: number }>({ item, columns, onEd
                 </td>
             ))}
             <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
-                <button onClick={() => onEdit(item)} className="text-blue-600 hover:text-blue-900">✏️</button>
-                <button onClick={() => onDelete(item.id)} className="text-red-600 hover:text-red-900">🗑️</button>
+                <Button
+                    variant="secondary"  // Secondary variant (masalan, oddiy ko'rinish)
+                    onClick={() => onEdit(item)}
+                >
+                    ✏️ Edit
+                </Button>
+                <Button
+                    variant="danger"  // Danger variant (qizil rang)
+                    onClick={() => onDelete(item.id)}
+                >
+                    🗑️ Delete
+                </Button>
             </td>
         </tr>
     );

@@ -13,6 +13,7 @@
 // Import o'zgartirish: '@/components/ConfirmModal' -> '@/components/layout/ConfirmModal'
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 // Tugmalar: variant bilan ishlaydi (className o'rniga).
+// O'zbek tiliga o'girish: Barcha matnlar (sarlavhalar, tugma nomlari, xabarlar) o'zbek tilida.
 
 import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
 import type { Column } from './useTable';  // Jadval ustun tipi
@@ -120,7 +121,7 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
                             />
                         </div>
                     ))}
-                    <div className="flex justify-end space-x-4 mt-8">  {/* Tugmalar qatori */}
+                    <div className="flex justify-end space-x-4 mt-8">
                         <Button
                             variant="danger"  // Qizilsimon (danger)
                             onClick={handleClose}

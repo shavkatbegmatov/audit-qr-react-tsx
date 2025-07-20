@@ -1,13 +1,20 @@
+// src/components/table/TableToolbar.tsx
+// Jadval ustidagi toolbar: Qidirish inputi, Filter va Create tugmalari.
+// O'zgartirish: Tugmalarni universal Button komponentiga almashtirdik.
+// Filter: secondary variant (gray), Create: primary variant (blue).
+
 import { useState } from 'react';
+import Button from '@/components/ui/Button';  // Universal Button import qilindi
 
 interface TableToolbarProps {
     onSearch: (q: string) => void;
-    onFilter: (f: Record<string, any>) => void;
+    onFilter: (f: Record<string, unknown>) => void;  // any o'rniga unknown
     onOpenCreate: () => void;
 }
 
 export default function TableToolbar({ onSearch, onFilter, onOpenCreate }: TableToolbarProps) {
     const [q, setQ] = useState('');
+
     return (
         <div className="flex items-center p-4 bg-gray-100 border-b border-gray-200 space-x-2">
             <input
@@ -18,12 +25,18 @@ export default function TableToolbar({ onSearch, onFilter, onOpenCreate }: Table
                 onChange={e => setQ(e.target.value)}
                 onKeyUp={e => e.key === 'Enter' && onSearch(q)}
             />
-            <button onClick={() => onFilter({})} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+            <Button
+                variant="secondary"  // Gray stillar
+                onClick={() => onFilter({})}
+            >
                 Filter
-            </button>
-            <button onClick={onOpenCreate} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            </Button>
+            <Button
+                variant="primary"  // Blue stillar
+                onClick={onOpenCreate}
+            >
                 Create
-            </button>
+            </Button>
         </div>
     );
 }
