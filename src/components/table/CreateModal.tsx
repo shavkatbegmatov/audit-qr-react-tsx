@@ -24,34 +24,34 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
     if (!visible) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-            <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
-                <h2 className="text-2xl font-bold mb-6 text-gray-800">Create New Item</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 backdrop-blur-md">
+            <div className="bg-white/80 backdrop-blur-lg p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4 transform transition-all duration-500 ease-in-out scale-105 hover:scale-110 border border-white/50">
+                <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">Yangi Element Yaratish ✨</h2>
                 <form>
                     {/* ID ni read-only ko'rsatish (create da auto-generated deb) */}
-                    <div className="mb-4">
-                        <label className="block mb-1 text-sm font-medium text-gray-700">ID</label>
+                    <div className="mb-5">
+                        <label className="block mb-2 text-sm font-semibold text-gray-800">ID</label>
                         <input
                             type="text"
-                            className="border border-gray-300 p-3 w-full rounded-lg bg-gray-100 cursor-not-allowed"
-                            value="Auto-generated"
+                            className="border border-gray-300 p-3 w-full rounded-xl bg-gray-50 cursor-not-allowed text-gray-600"
+                            value="Avtomatik Yaratiladi"
                             disabled
                             readOnly
                         />
                     </div>
                     {columns.filter(col => col.key !== 'id').map(col => (
-                        <div key={String(col.key)} className="mb-4">
-                            <label className="block mb-1 text-sm font-medium text-gray-700">{col.label}</label>
+                        <div key={String(col.key)} className="mb-5">
+                            <label className="block mb-2 text-sm font-semibold text-gray-800">{col.label}</label>
                             <input
                                 type="text"
-                                className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                                className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
                                 onChange={e => handleChange(col.key, e.target.value)}
                             />
                         </div>
                     ))}
-                    <div className="flex justify-end space-x-3 mt-6">
-                        <button type="button" onClick={onClose} className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200">Cancel</button>
-                        <button type="button" onClick={handleSubmit} className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">Create</button>
+                    <div className="flex justify-end space-x-4 mt-8">
+                        <button type="button" onClick={onClose} className="px-6 py-3 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400 transition duration-300 cursor-pointer shadow-md hover:shadow-lg">Bekor Qilish</button>
+                        <button type="button" onClick={handleSubmit} className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition duration-300 cursor-pointer shadow-md hover:shadow-lg">Yaratish</button>
                     </div>
                 </form>
             </div>
