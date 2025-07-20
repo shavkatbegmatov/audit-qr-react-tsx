@@ -14,7 +14,7 @@
 // Yangi: Universal Button komponentini ishlatish uchun import qo'shilgan va tugmalar Button bilan almashtirilgan.
 // Tugmalar: variant bilan ishlaydi (className o'rniga).
 // Status maydoni: ACTIVE yoki INACTIVE bo'ladi, select bilan tanlanadi (agar column key 'status' bo'lsa).
-// Tuzatish: Status default 'ACTIVE' qilib formData da oldindan o'rnatiladi (bo'sh yuborilmaslik uchun).
+// Tuzatish: Default 'status' faqat agar 'status' columnbo'lsa qo'shiladi (bo'sh yuborilmaslik uchun, va unrecognized field oldini olish uchun).
 
 import { useState, useEffect } from 'react';  // React hook'lari: state va effect uchun
 import type { Column } from './useTable';  // Jadval ustun tipi
@@ -37,12 +37,19 @@ export default function CreateModal<T extends { id: number }>({ visible, onSubmi
     // Yopishni tasdiqlash uchun state (dastlab false)
     const [showConfirmClose, setShowConfirmClose] = useState(false);
 
-    // Modal ochilganda formData ni bo'shatish va default status ni o'rnatish uchun effect
+    // 'status' column borligini tekshirish
+    const hasStatusColumn = columns.some(col => col.key === 'status');
+
+    // Modal ochilganda formData ni bo'shatish va agar kerak bo'lsa default status ni o'rnatish uchun effect
     useEffect(() => {
         if (visible) {
-            setFormData({ status: 'ACTIVE' } as Partial<T>);  // Har safar modal ochilganda bo'sh qilamiz va status ni default 'ACTIVE' qilamiz
+            const initialData: Partial<T> = {};
+            if (hasStatusColumn) {
+                initialData.status = 'ACTIVE' as any;  // Default 'ACTIVE' faqat status bo'lsa
+            }
+            setFormData(initialData);
         }
-    }, [visible]);  // visible o'zgarganda ishlaydi
+    }, [visible, hasStatusColumn]);  // visible va hasStatusColumn o'zgarganda ishlaydi
 
     // Maydon qiymatini o'zgartirish funksiyasi: Input yoki select dan kelayotgan qiymatni formData ga qo'shadi
     const handleChange = (key: keyof T, value: string) => {
