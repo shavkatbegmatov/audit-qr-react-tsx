@@ -1,7 +1,7 @@
 import TableRow from './TableRow';
 import type { Column } from './useTable';
 
-interface BodyProps<T> {
+interface BodyProps<T extends { id: any }> {
     data: T[];
     columns: Column<T>[];
     onEdit: (id: any, item: Partial<T>) => void;
@@ -9,7 +9,7 @@ interface BodyProps<T> {
     loading: boolean;
 }
 
-export default function TableBody<T>({ data, columns, onEdit, onDelete, loading }: BodyProps<T>) {
+export default function TableBody<T extends { id: any }>({ data, columns, onEdit, onDelete, loading }: BodyProps<T>) {
     if (loading) {
         return (
             <tbody>

@@ -1,0 +1,21 @@
+services:
+  front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: audit-qr-front
+    image: registry.brb.uz/brb-it-department/auditqr.brb.uz/auditqr-front
+    ports:
+      - "1880:80"
+    networks:
+      auditqr-front-network:
+        ipv4_address: 172.30.190.2  # Yangi statik IP
+networks:
+  auditqr-front-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.190.0/30  # 172.20.4.0/30 subnet
+          gateway: 172.30.190.1
+
+#test

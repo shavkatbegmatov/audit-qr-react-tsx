@@ -18,6 +18,9 @@ export default function Sidebar() {
                 <li>
                     <Link to={ROUTES.ROLES} className="hover:underline">Roles</Link>
                 </li>
+                <li>
+                    <Link to={ROUTES.USERS} className="hover:underline">Users</Link>
+                </li>
             </ul>
         </nav>
     );

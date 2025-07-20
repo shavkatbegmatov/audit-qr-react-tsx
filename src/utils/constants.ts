@@ -1,3 +1,4 @@
+// src/utils/constants.ts
 export const STORAGE_KEYS = {
     ACCESS_TOKEN: 'accessToken',
     REFRESH_TOKEN: 'refreshToken',
@@ -17,5 +18,6 @@ export const ROUTES = {
     AUDIT_OBJECT_TYPES: '/audit-object-types',
     AUDIT_LOGS: '/audit-logs',
     ROLES: '/roles',
+    USERS: '/users',
     WILDCARD: '*',
 } as const;

@@ -1,8 +1,9 @@
+// src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense, lazy } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
-import { WebSocketProvider } from '@/context/WebSocketContext'; // Yangi import
+import { WebSocketProvider } from '@/context/WebSocketContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import LoadingFallback from '@/components/LoadingFallback';
@@ -14,6 +15,7 @@ const LazyDashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const LazyAuditObjectTypesPage = lazy(() => import('@/pages/AuditObjectTypesPage'));
 const LazyAuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
 const LazyRolesPage = lazy(() => import('@/pages/RolesPage'));
+const LazyUsersPage = lazy(() => import('@/pages/UsersPage'));
 
 function App() {
     return (
@@ -37,6 +39,10 @@ function App() {
                                     <Route
                                         path={ROUTES.ROLES}
                                         element={<LazyRolesPage />}
+                                    />
+                                    <Route
+                                        path={ROUTES.USERS}
+                                        element={<LazyUsersPage />}
                                     />
                                 </Route>
                             </Route>

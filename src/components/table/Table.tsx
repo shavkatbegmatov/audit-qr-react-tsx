@@ -1,27 +1,28 @@
+// src/components/table/Table.tsx
 import { useState } from 'react';
 import type { Column } from './useTable';
 import useTable from './useTable';
 import TableToolbar from './TableToolbar';
-import TableHeader  from './TableHeader';
-import TableBody    from './TableBody';
+import TableHeader from './TableHeader';
+import TableBody from './TableBody';
 import TablePagination from './TablePagination';
-import CreateModal  from './CreateModal';
+import CreateModal from './CreateModal';
 
-interface TableProps<T> {
+interface TableProps<T extends { id: number }> {
     apiUrl: string;
     columns: Column<T>[];
 }
 
-export default function Table<T extends { id: any }>({ apiUrl, columns }: TableProps<T>) {
+export default function Table<T extends { id: number }>({ apiUrl, columns }: TableProps<T>) {
     const {
         data, loading, page, total,
         createItem, updateItem, deleteItem,
         onSearch, onFilter, onSort, onPageChange,
         sortKey, sortOrder
-    } = useTable<T>({ apiUrl, columns });
+    } = useTable<T>({ apiUrl, pageSize: 10, columns });
 
     const [showCreate, setShowCreate] = useState(false);
-    const openCreate  = () => setShowCreate(true);
+    const openCreate = () => setShowCreate(true);
     const closeCreate = () => setShowCreate(false);
     const handleCreate = async (item: Partial<T>) => { await createItem(item); closeCreate(); };
 

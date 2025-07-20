@@ -1,7 +1,8 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { STORAGE_KEYS } from '@/utils/constants';
+import { STORAGE_KEYS, ROUTES } from '@/utils/constants'; // ROUTES ni import qo'shing, agar allaqachon bo'lmasa
 import { refreshToken } from './authService';
 import { handleAuthError } from '@/utils/handleAuthError';
+import { AuthError } from '@/types/AuthTypes'; // AuthError ni import qo'shing, agar kerak bo'lsa
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -66,6 +67,14 @@ api.interceptors.response.use(
             } finally {
                 isRefreshing = false;
             }
+        }
+
+        // Yangi: 403 ni handle qilish - rol yo'qolganida login ga qaytish
+        if (error.response?.status === 403) {
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            window.location.href = ROUTES.LOGIN; // Login sahifasiga redirect
+            return Promise.reject(new AuthError(403, 'Forbidden: Insufficient permissions - relogin required'));
         }
 
         return Promise.reject(error);
