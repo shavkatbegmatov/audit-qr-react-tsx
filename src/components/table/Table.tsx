@@ -7,6 +7,7 @@ import TableHeader from './TableHeader';
 import TableBody from './TableBody';
 import TablePagination from './TablePagination';
 import CreateModal from './CreateModal';
+import EditModal from './EditModal';  // Import qo'shing
 
 interface TableProps<T extends { id: number }> {
     apiUrl: string;
@@ -22,9 +23,23 @@ export default function Table<T extends { id: number }>({ apiUrl, columns }: Tab
     } = useTable<T>({ apiUrl, pageSize: 10, columns });
 
     const [showCreate, setShowCreate] = useState(false);
+    const [editItem, setEditItem] = useState<Partial<T> | null>(null);  // Edit state qo'shing
+
     const openCreate = () => setShowCreate(true);
     const closeCreate = () => setShowCreate(false);
-    const handleCreate = async (item: Partial<T>) => { await createItem(item); closeCreate(); };
+    const handleCreate = async (item: Partial<T>) => {
+        await createItem(item);
+        closeCreate();
+    };
+
+    const openEdit = (item: T) => setEditItem(item);  // Edit ochish
+    const closeEdit = () => setEditItem(null);
+    const handleEdit = async (updated: Partial<T>) => {
+        if (updated.id) {
+            await updateItem(updated.id, updated);
+        }
+        closeEdit();
+    };
 
     return (
         <div className="bg-white border border-gray-200 rounded shadow overflow-hidden">
@@ -32,11 +47,12 @@ export default function Table<T extends { id: number }>({ apiUrl, columns }: Tab
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <TableHeader columns={columns} onSort={onSort} sortKey={sortKey} sortOrder={sortOrder} />
-                    <TableBody data={data} columns={columns} onEdit={updateItem} onDelete={deleteItem} loading={loading} />
+                    <TableBody data={data} columns={columns} onEdit={openEdit} onDelete={deleteItem} loading={loading} />
                 </table>
             </div>
             <TablePagination page={page} total={total} pageSize={10} onPageChange={onPageChange} />
             <CreateModal visible={showCreate} onSubmit={handleCreate} onClose={closeCreate} columns={columns} />
+            <EditModal visible={!!editItem} item={editItem} onSubmit={handleEdit} onClose={closeEdit} columns={columns} />
         </div>
     );
 }
