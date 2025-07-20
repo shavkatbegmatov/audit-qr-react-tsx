@@ -41,8 +41,20 @@ export function useEditModal<T extends { id: number }>({ visible, item, onSubmit
             await onSubmit(formData);
             toast.success("Muvaffaqiyatli saqlandi!");
             onClose(); // Muvaffaqiyatli bo'lsa, oynani yopish
-        } catch (error: any) {
-            const errMsg = error.response?.data?.error?.message || 'Saqlashda xatolik yuz berdi.';
+        } catch (error) { // 1. `: any` olib tashlandi. `error` endi `unknown` tipida.
+            let errMsg = 'Saqlashda xatolik yuz berdi.';
+
+            // 2. Xatoning turi tekshiriladi. Bu `axios`dan keladigan xatolik uchun standart yondashuv.
+            if (typeof error === 'object' && error !== null && 'response' in error) {
+                // Xatolik obyekti 'response' xususiyatiga ega ekanligini bilganimizdan so'ng,
+                // uning ichidagi ma'lumotlarga xavfsizroq yo'l bilan kiramiz.
+                const response = (error as { response?: { data?: { error?: { message?: string } } } }).response;
+                errMsg = response?.data?.error?.message || errMsg;
+            } else if (error instanceof Error) {
+                // Agar oddiy xatolik bo'lsa, uning xabarini olamiz
+                errMsg = error.message;
+            }
+
             setErrorMessage(errMsg);
             toast.error(errMsg);
         } finally {
