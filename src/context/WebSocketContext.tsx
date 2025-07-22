@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { STORAGE_KEYS, API_ENDPOINTS } from '@/utils/constants';
 import type { AuditLog } from '@/types/LogEntry';
+import api from '@/services/api';
 
 interface OnlineUser {
     username: string;
@@ -40,6 +41,21 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     const [error, setError] = useState<string | null>(null);
     const clientRef = useRef<Client | null>(null);
     const subscribedRef = useRef<boolean>(false);
+
+    const fetchInitialLogs = useCallback(async () => {
+        if (!isAuthenticated) return;
+        try {
+            const response = await api.get('/api/audit-logs'); // Assume endpoint; agar boshqacha bo'lsa, o'zgartiring (masalan, API_ENDPOINTS.AUDIT_LOGS)
+            if (response.data.success && Array.isArray(response.data.data)) {
+                setLogs(response.data.data);
+            } else {
+                console.warn('Initial logs fetch failed: invalid response');
+            }
+        } catch (err) {
+            console.error('Failed to fetch initial logs:', err);
+            setError('Initial loglarni yuklashda xato');
+        }
+    }, [isAuthenticated]);
 
     const connectWebSocket = useCallback(() => {
         if (!isAuthenticated) {
@@ -107,6 +123,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     useEffect(() => {
         if (isAuthenticated) {
+            fetchInitialLogs(); // Initial loglarni yuklash
             connectWebSocket();
         } else if (clientRef.current) {
             clientRef.current.deactivate();
@@ -124,7 +141,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 subscribedRef.current = false;
             }
         };
-    }, [isAuthenticated, connectWebSocket]);
+    }, [isAuthenticated, connectWebSocket, fetchInitialLogs]);
 
     useEffect(() => {
         if (clientRef.current && clientRef.current.active && subscribedRef.current) {
