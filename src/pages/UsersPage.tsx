@@ -1,6 +1,6 @@
 // src/pages/UsersPage.tsx
-import Table from '../components/table/Table';
-import type { Column } from '../components/table/useTable';
+import Table from '@/components/table/Table';
+import type { Column as BaseColumn } from '@/components/table/useTable';
 import { ROUTES } from '@/utils/constants';
 
 // API javobiga mos interfeys
@@ -29,6 +29,10 @@ interface UserType {
     roles: RoleType[];
 }
 
+type Column<T> = BaseColumn<T> & {
+    render?: (item: T) => string;
+};
+
 export default function UsersPage() {
     const columns: Column<UserType>[] = [
         { key: 'id', label: 'ID', sortable: true },
@@ -54,11 +58,6 @@ export default function UsersPage() {
         <Table<UserType>
             apiUrl={ROUTES.USERS}
             columns={columns}
-            // Agar Table komponenti meta ma'lumotlarni qo'llab-quvvatlasa
-            pagination={{
-                pageSize: 10,
-                currentPage: 0,
-            }}
         />
     );
 }

@@ -8,25 +8,24 @@
 import React, { type ButtonHTMLAttributes } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    children: React.ReactNode;                  // Tugma ichidagi kontent
+    children: React.ReactNode; // Tugma ichidagi kontent
     variant?: 'primary' | 'secondary' | 'danger'; // Tugma turi (default: primary)
-    isLoading?: boolean;                        // YANGI: Yuklanish holati uchun prop
+    isLoading?: boolean; // YANGI: Yuklanish holati uchun prop
     // disabled prop'i ButtonHTMLAttributes'dan keladi, qayta e'lon qilish shart emas.
 }
 
 const Button: React.FC<ButtonProps> = ({
-                                           children,
-                                           variant = 'primary',
-                                           isLoading = false, // isLoading'ni props'dan olamiz, default qiymati false
-                                           disabled = false,
-                                           className, // Tashqaridan kelishi mumkin bo'lgan qo'shimcha klasslar uchun
-                                           ...props
-                                       }) => {
-    // Variant bo'yicha stillarni belgilash (focus ring'lar bilan birga)
+   children,
+   variant = 'primary',
+   isLoading = false, // isLoading'ni props'dan olamiz, default qiymati false
+   disabled = false,
+   className = '', // Tashqaridan kelishi mumkin bo'lgan qo'shimcha klasslar uchun
+   ...props
+}) => {
     let variantClass = '';
     switch (variant) {
         case 'primary':
-            variantClass = 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500';
+            variantClass = 'bg-blue-700 text-white hover:bg-blue-800 focus:ring-blue-600';
             break;
         case 'secondary':
             variantClass = 'bg-gray-300 text-gray-800 hover:bg-gray-400 focus:ring-gray-500';
@@ -35,7 +34,7 @@ const Button: React.FC<ButtonProps> = ({
             variantClass = 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500';
             break;
         default:
-            variantClass = 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500';
+            variantClass = 'bg-blue-700 text-white hover:bg-blue-800 focus:ring-blue-600';
     }
 
     // Tugma o'chirilgan bo'lishi kerakmi? (tashqaridan kelgan disabled yoki isLoading holati)
@@ -46,7 +45,7 @@ const Button: React.FC<ButtonProps> = ({
             // Barcha klasslarni birlashtiramiz
             className={`
                 px-4 py-2 rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-opacity-75 
-                transition-all duration-200 flex items-center justify-center
+                transition-all duration-300 flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105
                 ${variantClass} 
                 ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                 ${className}

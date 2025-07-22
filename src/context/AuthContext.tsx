@@ -52,19 +52,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 setIsAuthenticated(true);
                 return true;
             } else {
+                // Yangi qism: Invalid token bo'lsa, tokenlarni o'chirib, logout qiling
+                localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+                if (STORAGE_KEYS.REFRESH_TOKEN) {
+                    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+                }
                 setIsAuthenticated(false);
                 setIsAdmin(false);
+                navigate(ROUTES.LOGIN, { replace: true }); // Agar kerak bo'lsa, to'g'ridan-to'g'ri redirect
                 return false;
             }
         } catch (error) {
             console.error('Token validation failed:', error);
+            // Xatolikda ham tokenlarni o'chirish
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            if (STORAGE_KEYS.REFRESH_TOKEN) {
+                localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            }
             setIsAuthenticated(false);
             setIsAdmin(false);
+            navigate(ROUTES.LOGIN, { replace: true });
             return false;
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [navigate]); // navigate ni dependency qo'shing, agar u useCallback da ishlatilsa
 
     const autoRefreshToken = useCallback(async () => {
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -84,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
         } catch (error) {
             console.error('Auto refresh failed:', error);
-            await handleLogout();
+            // await handleLogout();
         }
     }, []);
 
@@ -97,7 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const tokenCheckInterval = setInterval(async () => {
             if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
-                await handleLogout();
+                // await handleLogout();
             }
         }, 5000);
 
@@ -106,7 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (document.visibilityState === 'visible') {
                 await checkToken();
                 if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
-                    await handleLogout();
+                    // await handleLogout();
                 }
             }
         };
@@ -127,6 +139,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const handleLogout = useCallback(async () => {
         await serviceLogout();
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        if (STORAGE_KEYS.REFRESH_TOKEN) {
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        }
         setIsAuthenticated(false);
         setIsAdmin(false);
         navigate(ROUTES.LOGIN, { replace: true });

@@ -2,13 +2,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import React, { useState } from 'react';
 import ConfirmModal from '@/components/layout/ConfirmModal';
+import Button from '@/components/ui/Button';
+import { FaBars, FaTimes } from 'react-icons/fa';
 
 interface TopbarProps {
     userName?: string;
     onLogoutSuccess?: () => void;
+    onMenuClick: () => void;
+    isSidebarOpen: boolean; // Yangi prop
 }
 
-const Topbar: React.FC<TopbarProps> = ({ userName = 'Shavkat Begmatov', onLogoutSuccess }) => {
+const Topbar: React.FC<TopbarProps> = ({ userName = 'Shavkat Begmatov', onLogoutSuccess, onMenuClick, isSidebarOpen }) => {
     const navigate = useNavigate();
     const { logout } = useAuth();
 
@@ -38,21 +42,26 @@ const Topbar: React.FC<TopbarProps> = ({ userName = 'Shavkat Begmatov', onLogout
     };
 
     return (
-        <div className="flex justify-between items-center p-4 bg-white shadow-md border-b border-gray-200">
-            <span className="text-lg font-semibold text-gray-800 flex items-center">
-                👤 {userName}
-            </span>
+        <div className="flex justify-between items-center p-4 bg-white shadow-lg border-b border-gray-300 transition-shadow duration-300 hover:shadow-xl">
+            <div className="flex items-center gap-4">
+                <button onClick={onMenuClick} className="text-black text-[35px] cursor-pointer hover:rotate-90 transition-transform duration-300">
+                    {isSidebarOpen ? <FaTimes /> : <FaBars />}
+                </button>
+                <span className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          👤 {userName}
+        </span>
+            </div>
             <div>
-                <button
+                <Button
+                    variant="danger"
+                    isLoading={isLoggingOut}
                     onClick={handleLogoutClick}
-                    className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-all duration-200 cursor-pointer ${
-                        isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                    aria-label="Initiate log out of the application"
                     disabled={isLoggingOut}
+                    aria-label="Initiate log out of the application"
+                    className="px-6 py-3 rounded-xl text-lg font-semibold transition-all duration-300 hover:scale-105"
                 >
                     {isLoggingOut ? 'Logging out...' : 'Log Out'}
-                </button>
+                </Button>
                 <ConfirmModal
                     isOpen={showConfirmModal}
                     onConfirm={handleLogout}

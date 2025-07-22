@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
 
 export const ROUTES = {
     LOGIN: '/login',
+    DASHBOARD: '/',
     ROOT: '/',
     AUDIT_OBJECT_TYPES: '/audit-object-types',
     AUDIT_LOGS: '/audit-logs',
