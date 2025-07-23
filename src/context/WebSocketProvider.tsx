@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect, useRef, useCallback } from 'react';
+// src/context/WebSocketProvider.tsx
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useLocation } from 'react-router-dom';
@@ -6,28 +7,7 @@ import { useAuth } from './AuthContext';
 import { STORAGE_KEYS, API_ENDPOINTS } from '@/utils/constants';
 import type { AuditLog } from '@/types/LogEntry';
 import api from '@/services/api';
-
-interface OnlineUser {
-    username: string;
-    onlineSince: string;
-    currentPage: string;
-}
-
-interface WebSocketContextType {
-    onlineUsers: OnlineUser[];
-    logs: AuditLog[];
-    error: string | null;
-}
-
-export const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
-
-export const useWebSocket = () => {
-    const context = React.useContext(WebSocketContext);
-    if (!context) {
-        throw new Error('useWebSocket must be used within WebSocketProvider');
-    }
-    return context;
-};
+import { WebSocketContext } from './WebSocketContext'; // Import from new file
 
 interface WebSocketProviderProps {
     children: React.ReactNode;
@@ -36,7 +16,7 @@ interface WebSocketProviderProps {
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const location = useLocation();
-    const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<{ username: string; onlineSince: string; currentPage: string; }[]>([]);
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [error, setError] = useState<string | null>(null);
     const clientRef = useRef<Client | null>(null);
@@ -44,16 +24,31 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     const fetchInitialLogs = useCallback(async () => {
         if (!isAuthenticated) return;
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        if (!token) {
+            setError('Token topilmadi');
+            return;
+        }
+
         try {
-            const response = await api.get('/api/audit-logs'); // Assume endpoint; agar boshqacha bo'lsa, o'zgartiring (masalan, API_ENDPOINTS.AUDIT_LOGS)
-            if (response.data.success && Array.isArray(response.data.data)) {
-                setLogs(response.data.data);
+            const response = await api.get('/api/v1/audit-logs', { // Updated to match backend path
+                headers: { Authorization: `Bearer ${token}` },
+                params: {
+                    page: 0,
+                    size: 50,
+                    sort: 'timestamp,desc',
+                },
+            });
+
+            if (response.data.success && Array.isArray(response.data.data.content)) {
+                setLogs(response.data.data.content);
             } else {
                 console.warn('Initial logs fetch failed: invalid response');
+                setError('Loglarni yuklashda xato: Noto‘g‘ri javob formati');
             }
         } catch (err) {
             console.error('Failed to fetch initial logs:', err);
-            setError('Initial loglarni yuklashda xato');
+            setError('Initial loglarni yuklashda xato: ' + (err as Error).message);
         }
     }, [isAuthenticated]);
 
@@ -80,11 +75,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             connectHeaders: { Authorization: `Bearer ${token}` },
             reconnectDelay: 5000,
             onConnect: () => {
-                console.log('WebSocket ulandi'); // Debug log
-                subscribedRef.current = false; // Force resubscribe
+                console.log('WebSocket ulandi');
+                subscribedRef.current = false;
                 stompClient.subscribe('/topic/online-users', (message) => {
-                    const users: OnlineUser[] = JSON.parse(message.body);
-                    console.log('Online users received:', users); // Debug log
+                    const users: { username: string; onlineSince: string; currentPage: string; }[] = JSON.parse(message.body);
+                    console.log('Online users received:', users);
                     setOnlineUsers(users);
                 });
                 stompClient.subscribe('/topic/logs', (message) => {
@@ -93,19 +88,18 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 });
                 subscribedRef.current = true;
 
-                // Force publish update-page after subscribe
                 const storedUsername = localStorage.getItem('username');
                 if (storedUsername) {
                     stompClient.publish({
                         destination: '/app/update-page',
                         body: JSON.stringify({ username: storedUsername, page: location.pathname }),
                     });
-                    console.log('Update page published after connect:', location.pathname); // Debug log
+                    console.log('Update page published after connect:', location.pathname);
                 }
             },
             onStompError: (frame) => {
                 setError(`Xato: ${frame.body}`);
-                console.error('WebSocket error:', frame.body); // Debug log
+                console.error('WebSocket error:', frame.body);
                 if (clientRef.current) {
                     clientRef.current.deactivate();
                     clientRef.current = null;
@@ -123,7 +117,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     useEffect(() => {
         if (isAuthenticated) {
-            fetchInitialLogs(); // Initial loglarni yuklash
+            fetchInitialLogs();
             connectWebSocket();
         } else if (clientRef.current) {
             clientRef.current.deactivate();
@@ -151,10 +145,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                     destination: '/app/update-page',
                     body: JSON.stringify({ username, page: location.pathname }),
                 });
-                console.log('Page changed, update published:', location.pathname); // Debug log
+                console.log('Page changed, update published:', location.pathname);
             }
         } else {
-            // If not connected, reconnect
             connectWebSocket();
         }
     }, [location.pathname, connectWebSocket]);
@@ -170,7 +163,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 if (isAuthenticated) {
                     connectWebSocket();
                 } else {
-                    setError('Token yo\'qolgan – ulanish uzildi');
+                    setError('Token yo‘qolgan – ulanish uzildi');
                 }
             }
         };
@@ -183,14 +176,14 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                     clientRef.current = null;
                     subscribedRef.current = false;
                 }
-                setError('Token yo\'qolgan – ulanish uzildi');
+                setError('Token yo‘qolgan – ulanish uzildi');
             }
         }, 5000);
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
-                    setError('Token yo\'qolgan – ulanish uzildi');
+                    setError('Token yo‘qolgan – ulanish uzildi');
                 } else if (isAuthenticated) {
                     connectWebSocket();
                 }
