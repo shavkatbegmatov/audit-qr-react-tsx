@@ -4,7 +4,7 @@ import { Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/context/AuthContext';
 import { WebSocketProvider } from '@/context/WebSocketProvider';
-import { SidebarProvider } from '@/context/SidebarContext';
+import SidebarProvider from '@/context/SidebarContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import LoadingFallback from '@/components/LoadingFallback';
