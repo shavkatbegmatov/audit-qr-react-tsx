@@ -58,9 +58,8 @@ const Topbar: React.FC<TopbarProps> = ({ userName = 'Shavkat Begmatov', onLogout
                     onClick={handleLogoutClick}
                     disabled={isLoggingOut}
                     aria-label="Initiate log out of the application"
-                    className="px-6 py-3 rounded-xl text-lg font-semibold transition-all duration-300 hover:scale-105"
                 >
-                    {isLoggingOut ? 'Logging out...' : 'Log Out'}
+                    {isLoggingOut ? 'Chiqilmoqda...' : 'Chiqish'}
                 </Button>
                 <ConfirmModal
                     isOpen={showConfirmModal}

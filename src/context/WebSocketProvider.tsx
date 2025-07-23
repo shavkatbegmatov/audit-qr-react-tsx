@@ -7,7 +7,7 @@ import { useAuth } from './AuthContext';
 import { STORAGE_KEYS, API_ENDPOINTS } from '@/utils/constants';
 import type { AuditLog } from '@/types/LogEntry';
 import api from '@/services/api';
-import { WebSocketContext } from './WebSocketContext'; // Import from new file
+import { WebSocketContext } from './WebSocketContext';
 
 interface WebSocketProviderProps {
     children: React.ReactNode;
@@ -31,7 +31,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
 
         try {
-            const response = await api.get('/api/v1/audit-logs', { // Updated to match backend path
+            const response = await api.get('audit-logs', { // Updated to match backend path
                 headers: { Authorization: `Bearer ${token}` },
                 params: {
                     page: 0,

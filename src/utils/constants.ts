@@ -17,6 +17,8 @@ export const ROUTES = {
     DASHBOARD: '/',
     ROOT: '/',
     AUDIT_OBJECT_TYPES: '/audit-object-types',
+    AUDIT_OBJECT_BRANCH_NETWORKS: '/audit-object-branch-networks',
+    AUDIT_OBJECTS: '/audit-objects',
     AUDIT_LOGS: '/audit-logs',
     ROLES: '/roles',
     USERS: '/users',

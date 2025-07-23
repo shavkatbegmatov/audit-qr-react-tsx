@@ -14,6 +14,7 @@ import { ROUTES } from '@/utils/constants';
 const LazyLoginPage = lazy(() => import('@/pages/LoginPage'));
 const LazyDashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const LazyAuditObjectTypesPage = lazy(() => import('@/pages/AuditObjectTypesPage'));
+const LazyAuditObjectBranchNetworkPage = lazy(() => import('@/pages/AuditObjectBranchNetworkPage'));
 const LazyAuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
 const LazyRolesPage = lazy(() => import('@/pages/RolesPage'));
 const LazyUsersPage = lazy(() => import('@/pages/UsersPage'));
@@ -28,12 +29,21 @@ function App() {
                             <Routes>
                                 <Route path={ROUTES.LOGIN} element={<LazyLoginPage />} />
                                 <Route element={<ProtectedRoute />}>
-                                    <Route path={ROUTES.ROOT} element={<MainLayout />}>
-                                        <Route index element={<LazyDashboardPage />} />
+                                    <Route element={<MainLayout />}>
+                                        <Route path={ROUTES.ROOT} element={<LazyDashboardPage />} />
                                         <Route
                                             path={ROUTES.AUDIT_OBJECT_TYPES}
                                             element={<LazyAuditObjectTypesPage />}
                                         />
+                                        <Route
+                                            path={ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS}
+                                            element={<LazyAuditObjectBranchNetworkPage />}
+                                        />
+                                        <Route
+                                            path={ROUTES.AUDIT_OBJECTS}
+                                            element={<LazyAuditObjectBranchNetworkPage />}
+                                        />
+                                        ROUTES.AUDIT_OBJECTS
                                         <Route
                                             path={ROUTES.AUDIT_LOGS}
                                             element={<LazyAuditLogsPage />}
@@ -46,6 +56,7 @@ function App() {
                                             path={ROUTES.USERS}
                                             element={<LazyUsersPage />}
                                         />
+                                        {/* Add sub-routes here as needed */}
                                     </Route>
                                 </Route>
                                 <Route

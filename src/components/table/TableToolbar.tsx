@@ -35,7 +35,7 @@ export default function TableToolbar({ onSearch, onFilter, onOpenCreate }: Table
                 variant="primary"  // Blue stillar
                 onClick={onOpenCreate}
             >
-                Create
+                Yaratish
             </Button>
         </div>
     );

@@ -15,7 +15,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-gray-100 p-6">
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+                    <h1 className="text-3xl font-bold text-gray-800">Boshqaruv paneli</h1>
                     <button
                         onClick={handleLogout}
                         className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="bg-white p-6 rounded shadow">
-                        <h2 className="text-xl font-semibold mb-2">Audit Object Types</h2>
+                        <h2 className="text-xl font-semibold mb-2">Audit obyekt turlari</h2>
                         <p className="text-gray-600 text-sm">Barcha obyekt turlari ro‘yxati</p>
                     </div>
 
