@@ -1,17 +1,21 @@
-import { NavLink, useLocation } from 'react-router-dom';
+// src/components/Sidebar.tsx
+
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/constants';
 import { FaDesktop, FaTable, FaTh, FaCogs, FaAngleRight } from 'react-icons/fa';
 import logoImage from '@/assets/brb_logo_with_name_white.png';
 import { useSidebar } from '@/context/SidebarContext';
-import React from "react";
+import React, { useEffect, memo, useMemo } from "react"; // `memo` va `useMemo` import qilindi
 
+// NavItem interfeysi o'zgarishsiz qoladi
 interface NavItem {
     label: string;
     route: string;
-    icon: React.ComponentType<{ className?: string }>;
-    subItems?: { label: string; route: string }[];
+    icon?: React.ComponentType<{ className?: string }>;
+    subItems?: NavItem[];
 }
 
+// navItems ma'lumotlari o'zgarishsiz qoladi
 const navItems: NavItem[] = [
     { label: 'Boshqaruv paneli', route: ROUTES.ROOT, icon: FaDesktop },
     {
@@ -19,186 +23,191 @@ const navItems: NavItem[] = [
         route: ROUTES.REFERENCE,
         icon: FaTable,
         subItems: [
-            { label: 'Audit obyekt turlari', route: ROUTES.AUDIT_OBJECT_TYPES },
-            { label: 'Audit obyekt tarmog\'lari', route: ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS },
-            { label: 'Audit obyektlari', route: ROUTES.AUDIT_OBJECTS },
-            { label: 'Bloklar', route: '/audit-object-types/sub3' },
-            { label: 'Tarkibiy tuzilmalar', route: '/audit-object-types/sub4' },
-            { label: 'Auditorlar', route: '/audit-object-types/sub5' },
-            { label: 'Obyekt bo\'limlari', route: '/audit-object-types/sub6' },
-            { label: 'Risklar reestri', route: '/audit-object-types/sub7' },
-            { label: 'Qo\'shimcha reestrlar', route: '/audit-object-types/sub8' },
-            { label: 'Aniqlangan holatlar reyestri', route: '/audit-object-types/sub9' },
+            { label: 'Audit obyekt turlari', route: ROUTES.AUDIT_OBJECT_TYPES, icon: FaTable },
+            { label: 'Audit obyekt tarmog\'lari', route: ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS, icon: FaTable },
+            { label: 'Audit obyektlari', route: ROUTES.AUDIT_OBJECTS, icon: FaTable },
+            { label: 'Bloklar', route: ROUTES.BLOCK, icon: FaTable },
+            {
+                label: 'Risklar reestri',
+                route: ROUTES.RISK_REGISTRY,
+                icon: FaTable,
+                subItems: [
+                    { label: 'Risklarni baholash mezoni', route: '/risk-registry/list', icon: FaTable },
+                    { label: 'Birinchi darajali risk turlari', route: ROUTES.TIER_1_RISK_TYPES, icon: FaTable },
+                    { label: 'Ikkinchi darajali risk turlari', route: ROUTES.TIER_2_RISK_TYPES, icon: FaTable },
+                    { label: 'Uchunchi darajali risk turlari', route: ROUTES.TIER_3_RISK_TYPES, icon: FaTable },
+                ]
+            },
+            { label: 'Tarkibiy tuzilmalar', route: '/audit-object-types/sub4', icon: FaTable },
+            { label: 'Auditorlar', route: '/audit-object-types/sub5', icon: FaTable },
+            { label: 'Obyekt bo\'limlari', route: '/audit-object-types/sub6', icon: FaTable },
+            { label: 'Qo\'shimcha reestrlar', route: '/audit-object-types/sub8', icon: FaTable },
+            { label: 'Aniqlangan holatlar reyestri', route: '/audit-object-types/sub9', icon: FaTable },
         ]
     },
     { label: 'Audit Loglari', route: ROUTES.AUDIT_LOGS, icon: FaTh },
     {
         label: 'Xavfsizlik',
-        route: ROUTES.ROLES,
+        route: '/security',
         icon: FaCogs,
         subItems: [
-            { label: 'Foydalanuvchilar', route: ROUTES.USERS },
-            { label: 'Rollar', route: ROUTES.ROLES },
+            { label: 'Foydalanuvchilar', route: ROUTES.USERS, icon: FaTable },
+            { label: 'Rollar', route: ROUTES.ROLES, icon: FaTable },
         ]
     },
 ];
+
+// Bu funksiya marshrut bo'yicha ota-ona menyularni topadi.
+// U faqat marshrut o'zgarganda kerak, shuning uchun uni Sidebar komponentidan tashqarida qoldiramiz.
+function findParentsForRoute(items: NavItem[], targetRoute: string, currentParents: string[] = []): string[] {
+    for (const item of items) {
+        // Agar joriy elementning yo'li maqsadli yo'l bilan bir xil bo'lsa,
+        // va uning sub-elementlari bo'lsa, demak, bu ota-ona hisoblanadi.
+        if (item.route === targetRoute && item.subItems) {
+            return [...currentParents, item.label];
+        }
+
+        if (item.subItems) {
+            const found = findParentsForRoute(item.subItems, targetRoute, [...currentParents, item.label]);
+            if (found.length > 0) {
+                // Agar ichki elementlardan topilsa, bu topilgan yo'lni qaytaramiz
+                return found;
+            }
+        }
+    }
+    // Agar hech narsa topilmasa, bo'sh massiv qaytaramiz.
+    // Marshrut sub-item bo'lmasa, ota-onasi bo'lmaydi.
+    // Agar marshrut topilsa-yu, subItems bo'lmasa, bizga faqat uning ota-onalari kerak, o'zi emas.
+    const directParent = items.find(item => item.subItems?.some(sub => sub.route === targetRoute));
+    if (directParent) {
+        return [...currentParents, directParent.label];
+    }
+
+    return [];
+}
+
 
 interface SidebarProps {
     isOpen: boolean;
 }
 
 export default function Sidebar({ isOpen }: SidebarProps) {
+    const location = useLocation();
+    const { setOpenedSubMenus } = useSidebar();
+
+    // Sahifa birinchi marta yuklanganda yoki marshrut o'zgarganda,
+    // aktiv menyuning ota-ona menyularini ochib qo'yish uchun.
+    useEffect(() => {
+        const parents = findParentsForRoute(navItems, location.pathname);
+        if (parents.length > 0) {
+            // Ota-ona menyularni ochiqlar ro'yxatiga qo'shamiz.
+            // Bu yerda biz to'g'ridan-to'g'ri yangi ro'yxatni o'rnatamiz.
+            setOpenedSubMenus(Array.from(new Set(parents)));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]); // `setOpenedSubMenus` ni dependency ro'yxatidan olib tashladik, chunki u o'zgarmaydi.
+
+    // `navItems` o'zgarmas ekan, menyu elementlarini `useMemo` bilan keshlaymiz.
+    // Bu `Sidebar` har safar qayta render bo'lganda `SidebarItem`larni qaytadan yaratishning oldini oladi.
+    const memoizedNavItems = useMemo(() => {
+        return navItems.map((item) => (
+            <SidebarItem key={item.label} item={item} />
+        ));
+    }, []); // Bo'sh massiv - faqat bir marta ishlaydi.
+
     return (
         <nav
-            className={`fixed
-                        top-0
-                        left-0
-                        h-full
-                        w-[250px] 
-                        bg-[#1b1a1b] 
-                        backdrop-blur-md 
-                        text-white 
-                        overflow-y-auto 
-                        transition-all 
-                        duration-[100ms] 
-                        ease-in-out
-                        ${isOpen ? 'left-0' : 'left-[-250px]'}
-                        [&::-webkit-scrollbar]:w-0`}
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[#1b1a1b] backdrop-blur-md text-white overflow-y-auto transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} [&::-webkit-scrollbar]:w-0`}
         >
             <header className="bg-[#33363a]">
-                <img
-                    src={logoImage}
-                    alt="Profile"
-                    className="w-[200px] m-[15px]"
-                />
-                <h1 className="text-center
-                               font-medium
-                               text-[25px]
-                               pb-[13px]
-                               font-sans
-                               tracking-[2px]
-                               text-red-500"
-                >AuditQR</h1>
+                <img src={logoImage} alt="Profile" className="w-[200px] m-[15px]" />
+                <h1 className="text-center font-medium text-[25px] pb-[13px] font-sans tracking-[2px] text-red-500">
+                    AuditQR
+                </h1>
             </header>
             <div className="menu w-full mt-[30px]">
-                {navItems.map((item) => (
-                    <SidebarItem key={item.route} item={item} />
-                ))}
+                {memoizedNavItems}
             </div>
         </nav>
     );
 }
 
+// ===== SidebarItem Komponenti (OPTIMALLASHTIRILGAN) =====
+
 interface SidebarItemProps {
     item: NavItem;
+    level?: number;
 }
 
-function SidebarItem({ item }: SidebarItemProps) {
+// `React.memo` - bu HOC (High-Order Component). U komponentni o'rab oladi va uning
+// props'lari o'zgarmagan bo'lsa, qayta render bo'lishiga yo'l qo'ymaydi.
+const SidebarItem = memo(function SidebarItem({ item, level = 0 }: SidebarItemProps) {
     const { openedSubMenus, toggleSubMenu } = useSidebar();
     const location = useLocation();
-    const isParentActive = (
-        location.pathname === item.route ||
-        item.subItems?.some(
-            sub => location.pathname === sub.route
-        )
-    );
-    const isSubOpen = openedSubMenus.includes(item.label) || isParentActive;
+    const navigate = useNavigate();
 
+    // Marshrutning aktivligini tekshirish uchun `useMemo`dan foydalanamiz.
+    // Bu hisob-kitob faqat `location.pathname` yoki `item` o'zgarganda ishlaydi.
+    const isParentActive = useMemo(() => {
+        const isAnySubItemActive = (navItem: NavItem): boolean => {
+            return navItem.subItems?.some(
+                (sub) => location.pathname === sub.route || isAnySubItemActive(sub)
+            ) || false;
+        };
+        return location.pathname === item.route || isAnySubItemActive(item);
+    }, [location.pathname, item]);
+
+    const isSubOpen = openedSubMenus.includes(item.label);
+    const paddingLeft = 10 + (level * 20);
+
+    // Agar elementning ichki menyulari (subItems) bo'lsa
+    if (item.subItems) {
+        const handleParentClick = () => {
+            // Agar joriy sahifa shu menyuga tegishli bo'lsa, shunchaki ochamiz/yopamiz.
+            if (location.pathname === item.route) {
+                toggleSubMenu(item.label);
+            } else {
+                // Agar boshqa sahifada bo'lsak, avval menyuni ochamiz (agar yopiq bo'lsa),
+                // keyin o'sha menyu sahifasiga o'tamiz.
+                if (!isSubOpen) {
+                    toggleSubMenu(item.label);
+                }
+                navigate(item.route);
+            }
+        };
+
+        return (
+            <div className="relative">
+                <div
+                    onClick={handleParentClick}
+                    style={{ paddingLeft: `${paddingLeft + 15}px` }}
+                    className={`text-white text-base no-underline py-[5px] pr-[30px] leading-[40px] transition duration-300 ease flex items-center cursor-pointer relative border-l-4 ${isParentActive ? 'border-red-500' : 'border-transparent hover:bg-[#33363a]'} ${isParentActive && !isSubOpen ? 'bg-red-500' : ''}`}
+                >
+                    {item.icon && <item.icon className={`mr-[10px] ${isParentActive ? (isParentActive && !isSubOpen ? 'text-white' : 'text-red-500') : ''}`} />}
+                    <span className="flex-1 truncate" title={item.label}>{item.label}</span>
+                    <FaAngleRight className={`absolute right-[20px] transition-transform duration-300 ${isSubOpen ? 'rotate-90' : ''}`} />
+                </div>
+
+                <div className={`overflow-hidden transition-all duration-300 ease ${isSubOpen ? 'max-h-[999px]' : 'max-h-0'}`}>
+                    <div className="bg-[#262627]">
+                        {item.subItems.map((subItem) => (
+                            <SidebarItem key={subItem.label} item={subItem} level={level + 1} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Agar oddiy menyu bandi bo'lsa (ichki menyusi yo'q)
     return (
-        <div className="item relative cursor-pointer">
-            {item.subItems ? (
-                <div
-                    className={`
-                        text-white 
-                        text-base 
-                        no-underline 
-                        py-[5px] 
-                        ${isSubOpen ? 'border-l-8 border-red-500 pl-[22px]' : 'pl-[30px]'} 
-                        pr-[30px] 
-                        leading-[40px] 
-                        hover:bg-[#33363a] 
-                        transition 
-                        duration-300 
-                        ease 
-                        flex 
-                        items-center 
-                        relative
-                    `}
-                >
-                    <NavLink to={item.route} className="flex items-center">
-                        <item.icon className={`
-                            mr-[15px] 
-                            ${isParentActive ? 'text-red-500' : ''}
-                        `} />
-                    </NavLink>
-                    <span onClick={() => toggleSubMenu(item.label)} className="flex-1 cursor-pointer">
-            {item.label}
-          </span>
-                    <span
-                        className="
-                            absolute
-                            right-0
-                            m-[20px]
-                            transition duration-300 ease
-                            flex items-center
-                            cursor-pointer"
-                        onClick={() => toggleSubMenu(item.label)}
-                    >
-            <FaAngleRight className={`${isSubOpen ? 'rotate-90' : ''}`} />
-          </span>
-                </div>
-            ) : (
-                <NavLink
-                    to={item.route}
-                    className={({ isActive }) => `
-                        text-white 
-                        text-base 
-                        no-underline 
-                        p-[5px_30px] 
-                        leading-[40px] 
-                        transition duration-300 ease 
-                        flex items-center 
-                        ${isActive ? 'bg-red-500 hover:bg-red-600' : 'hover:bg-[#33363a]'}
-                    `}
-                >
-                    <item.icon className="mr-[15px]" />
-                    {item.label}
-                </NavLink>
-            )}
-            {item.subItems && (
-                <div
-                    className={`
-                        sub-menu 
-                        bg-[#262627] 
-                        overflow-hidden 
-                        transition-all 
-                        duration-300 ease 
-                        ${isSubOpen ? 'max-h-[999px]' : 'max-h-0'}
-                    `}
-                >
-                    {item.subItems.map((sub) => (
-                        <NavLink
-                            key={sub.route}
-                            to={sub.route}
-                            className={({ isActive }) => `
-                                sub-item 
-                                text-white 
-                                text-base 
-                                no-underline 
-                                block 
-                                pl-[36px] 
-                                leading-[40px] 
-                                hover:bg-red-600 
-                                transition duration-300 ease 
-                                border-l-4 border-red-500 
-                                ${isActive ? 'bg-red-500' : 'hover:bg-red-200'}
-                            `}
-                        >
-                            {sub.label}
-                        </NavLink>
-                    ))}
-                </div>
-            )}
-        </div>
+        <NavLink
+            to={item.route}
+            style={{ paddingLeft: `${paddingLeft + 15}px` }}
+            className={({ isActive }) => `text-white text-base no-underline flex items-center leading-[40px] transition duration-300 ease border-l-4 ${isActive ? 'bg-red-500 border-red-500' : 'border-transparent hover:bg-red-600'}`}
+        >
+            {item.icon && <item.icon className="mr-[10px]" />}
+            <span className="truncate flex-1" title={item.label}>{item.label}</span>
+        </NavLink>
     );
-}
+});

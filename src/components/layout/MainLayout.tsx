@@ -23,7 +23,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return (
         <div className="flex min-h-screen bg-gray-100 transition-colors duration-300">
             <Sidebar isOpen={isSidebarOpen} />
-            <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-[250px]' : 'ml-0'}`}>
+            <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
                 <Topbar
                     onMenuClick={() => setIsSidebarOpen((prev) => !prev)}
                     isSidebarOpen={isSidebarOpen}

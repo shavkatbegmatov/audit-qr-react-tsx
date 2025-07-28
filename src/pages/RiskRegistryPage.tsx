@@ -1,4 +1,4 @@
-// src/pages/ReferencePage.tsx
+// src/pages/RiskRegistryPage.tsx
 import Table from '@/components/table/Table';
 import type { Column } from '@/components/table/useTable';
 import { ROUTES } from "@/utils/constants.ts";
@@ -11,7 +11,7 @@ interface AuditType {
     status: string;
 }
 
-export default function ReferencePage() {
+export default function RiskRegistryPage() {
     const columns: Column<AuditType>[] = [
         { key: 'id',          label: 'ID',          sortable: true },
         { key: 'code',        label: 'Code',        sortable: true },
@@ -22,7 +22,7 @@ export default function ReferencePage() {
 
     return (
         <Table<AuditType>
-            apiUrl={ROUTES.REFERENCE}
+            apiUrl={ROUTES.RISK_REGISTRY}
             columns={columns}
         />
     );
