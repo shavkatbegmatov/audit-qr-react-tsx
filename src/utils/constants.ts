@@ -16,6 +16,7 @@ export const ROUTES = {
     LOGIN: '/login',
     DASHBOARD: '/',
     ROOT: '/',
+    REFERENCE: '/references',
     AUDIT_OBJECT_TYPES: '/audit-object-types',
     AUDIT_OBJECT_BRANCH_NETWORKS: '/audit-object-branch-networks',
     AUDIT_OBJECTS: '/audit-objects',

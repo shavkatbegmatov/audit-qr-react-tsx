@@ -13,6 +13,7 @@ import { ROUTES } from '@/utils/constants';
 
 const LazyLoginPage = lazy(() => import('@/pages/LoginPage'));
 const LazyDashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const LazyReferencePage = lazy(() => import('@/pages/ReferencePage'));
 const LazyAuditObjectTypesPage = lazy(() => import('@/pages/AuditObjectTypesPage'));
 const LazyAuditObjectBranchNetworkPage = lazy(() => import('@/pages/AuditObjectBranchNetworkPage'));
 const LazyAuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
@@ -31,6 +32,10 @@ function App() {
                                 <Route element={<ProtectedRoute />}>
                                     <Route element={<MainLayout />}>
                                         <Route path={ROUTES.ROOT} element={<LazyDashboardPage />} />
+                                        <Route
+                                            path={ROUTES.REFERENCE}
+                                            element={<LazyReferencePage />}
+                                        />
                                         <Route
                                             path={ROUTES.AUDIT_OBJECT_TYPES}
                                             element={<LazyAuditObjectTypesPage />}

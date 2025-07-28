@@ -16,7 +16,7 @@ const navItems: NavItem[] = [
     { label: 'Boshqaruv paneli', route: ROUTES.ROOT, icon: FaDesktop },
     {
         label: "Asosiy ma'lumotlar",
-        route: ROUTES.AUDIT_OBJECT_TYPES,
+        route: ROUTES.REFERENCE,
         icon: FaTable,
         subItems: [
             { label: 'Audit obyekt turlari', route: ROUTES.AUDIT_OBJECT_TYPES },
