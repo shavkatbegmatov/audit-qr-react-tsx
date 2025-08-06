@@ -1,8 +1,9 @@
 // src/hooks/useEditModal.ts
 import { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast'; // Xabar berish uchun
+import toast from 'react-hot-toast';
+import { handleApiError } from './useErrorHandler';
+import { useModalCloseHandlers } from './useModalCloseHandlers';
 
-// Hook qabul qiladigan props'lar uchun interfeys
 interface UseEditModalProps<T> {
     visible: boolean;
     item: Partial<T> | null;
@@ -10,51 +11,37 @@ interface UseEditModalProps<T> {
     onClose: () => void;
 }
 
-// Edit Modal uchun barcha mantiqni o'zida saqlovchi custom hook
-export function useEditModal<T extends { id: number }>({ visible, item, onSubmit, onClose }: UseEditModalProps<T>) {
-    // State'lar
+export function useEditModal<T extends { id: number; parentId?: number | null }>({ visible, item, onSubmit, onClose }: UseEditModalProps<T>) {
     const [formData, setFormData] = useState<Partial<T>>({});
     const [initialData, setInitialData] = useState<Partial<T>>({});
     const [showConfirmClose, setShowConfirmClose] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Modal ochilganda formani to'ldirish uchun effekt
     useEffect(() => {
         if (visible && item) {
             setFormData(item);
             setInitialData(item);
-            setErrorMessage(null); // Xatolikni tozalash
+            setErrorMessage(null);
         }
     }, [visible, item]);
 
-    // Maydon o'zgarishini boshqarish
     const handleChange = useCallback((key: keyof T, value: string) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [key]: key === 'parentId' ? (value ? parseInt(value, 10) : null) : value
+        }));
     }, []);
 
-    // Formani yuborish (saqlash)
     const handleSubmit = useCallback(async () => {
         setIsSubmitting(true);
         setErrorMessage(null);
         try {
             await onSubmit(formData);
             toast.success("Muvaffaqiyatli saqlandi!");
-            onClose(); // Muvaffaqiyatli bo'lsa, oynani yopish
-        } catch (error) { // 1. `: any` olib tashlandi. `error` endi `unknown` tipida.
-            let errMsg = 'Saqlashda xatolik yuz berdi.';
-
-            // 2. Xatoning turi tekshiriladi. Bu `axios`dan keladigan xatolik uchun standart yondashuv.
-            if (typeof error === 'object' && error !== null && 'response' in error) {
-                // Xatolik obyekti 'response' xususiyatiga ega ekanligini bilganimizdan so'ng,
-                // uning ichidagi ma'lumotlarga xavfsizroq yo'l bilan kiramiz.
-                const response = (error as { response?: { data?: { error?: { message?: string } } } }).response;
-                errMsg = response?.data?.error?.message || errMsg;
-            } else if (error instanceof Error) {
-                // Agar oddiy xatolik bo'lsa, uning xabarini olamiz
-                errMsg = error.message;
-            }
-
+            onClose();
+        } catch (error) {
+            const errMsg = handleApiError(error);
             setErrorMessage(errMsg);
             toast.error(errMsg);
         } finally {
@@ -62,12 +49,10 @@ export function useEditModal<T extends { id: number }>({ visible, item, onSubmit
         }
     }, [formData, onSubmit, onClose]);
 
-    // O'zgarishlar borligini tekshirish
     const hasChanges = useCallback(() => {
         return JSON.stringify(formData) !== JSON.stringify(initialData);
     }, [formData, initialData]);
 
-    // Modalni yopishni so'rash
     const handleClose = useCallback(() => {
         if (hasChanges()) {
             setShowConfirmClose(true);
@@ -76,33 +61,13 @@ export function useEditModal<T extends { id: number }>({ visible, item, onSubmit
         }
     }, [hasChanges, onClose]);
 
-    // Yopishni tasdiqlash
-    const confirmClose = useCallback(() => {
-        setShowConfirmClose(false);
-        onClose();
-    }, [onClose]);
+    const { confirmClose, cancelClose } = useModalCloseHandlers({
+        setShowConfirmClose,
+        onClose,
+        visible,
+        handleClose
+    });
 
-    // Yopishni bekor qilish
-    const cancelClose = useCallback(() => {
-        setShowConfirmClose(false);
-    }, []);
-
-    // ESC tugmasini eshitish
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                handleClose();
-            }
-        };
-        if (visible) {
-            document.addEventListener('keydown', handleKeyDown);
-        }
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [visible, handleClose]);
-
-    // Hook o'zidan UI uchun kerakli hamma narsani qaytaradi
     return {
         formData,
         isSubmitting,

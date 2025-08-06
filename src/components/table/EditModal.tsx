@@ -2,20 +2,21 @@
 import type { Column } from './useTable';
 import ConfirmModal from '@/components/layout/ConfirmModal';
 import Button from '@/components/ui/Button';
-import { useEditModal } from '@/hooks/useEditModal'; // Yangi hook'ni import qilamiz
+import { useEditModal } from '@/hooks/useEditModal';
+import { useParentOptions } from '@/hooks/useParentOptions';
+import { useState, useEffect } from 'react';
 
-// Props interfeysi o'zgarishsiz qoladi
 interface EditModalProps<T extends { id: number }> {
     visible: boolean;
     item: Partial<T> | null;
     onSubmit: (updatedItem: Partial<T>) => Promise<void>;
     onClose: () => void;
     columns: Column<T>[];
+    parentApiUrl?: string;
+    grandParentApiUrl?: string;
 }
 
-// Komponent endi faqat UI uchun javobgar
-export default function EditModal<T extends { id: number }>({ visible, item, onSubmit, onClose, columns }: EditModalProps<T>) {
-    // Barcha mantiqni hook'dan olamiz
+export default function EditModal<T extends { id: number; parentId?: number | null }>({ visible, item, onSubmit, onClose, columns, parentApiUrl, grandParentApiUrl }: EditModalProps<T>) {
     const {
         formData,
         isSubmitting,
@@ -28,51 +29,148 @@ export default function EditModal<T extends { id: number }>({ visible, item, onS
         cancelClose,
     } = useEditModal({ visible, item, onSubmit, onClose });
 
-    // Agar modal ko'rinmas bo'lsa yoki item bo'lmasa, hech narsa qaytarmaymiz
+    const grandOptions = useParentOptions(grandParentApiUrl);
+    const parentOptionsAll = useParentOptions(parentApiUrl);
+
+    const [selectedGrand, setSelectedGrand] = useState('');
+
+    const selectedParent = String(formData.parentId ?? '');
+
+    useEffect(() => {
+        if (visible && grandParentApiUrl && parentApiUrl && parentOptionsAll.length > 0) {
+            const currentParent = parentOptionsAll.find(opt => opt.id === parseInt(selectedParent));
+            setSelectedGrand(String(currentParent?.parentId ?? ''));
+        }
+    }, [visible, grandParentApiUrl, parentApiUrl, parentOptionsAll, selectedParent]);
+
+    const filteredParentOptions = selectedGrand ? parentOptionsAll.filter(opt => opt.parentId === parseInt(selectedGrand)) : parentOptionsAll;
+
     if (!visible || !item) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md" role="dialog" aria-modal="true">
-            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full mx-4">
-                <h2 className="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Elementni Tahrirlash ✨</h2>
-                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                    <div className="mb-5">
-                        <label className="block mb-2 text-sm font-semibold text-gray-800">ID</label>
-                        <input
-                            type="text"
-                            className="border border-gray-300 p-3 w-full rounded-xl bg-gray-50 cursor-not-allowed text-gray-600"
-                            value={String(formData.id ?? 'Noma\'lum')}
-                            disabled readOnly
-                        />
-                    </div>
-                    {columns.filter(col => col.key !== 'id').map(col => (
-                        <div key={String(col.key)} className="mb-5">
-                            <label className="block mb-2 text-sm font-semibold text-gray-800">{col.label}</label>
-                            {col.key === 'status' ? (
-                                <select
-                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    value={String(formData[col.key as keyof T] ?? 'ACTIVE')}
-                                    onChange={e => handleChange(col.key, e.target.value)}
-                                    disabled={isSubmitting}
-                                >
-                                    <option value="ACTIVE">ACTIVE</option>
-                                    <option value="INACTIVE">INACTIVE</option>
-                                </select>
-                            ) : (
+            <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col overflow-hidden">
+                <div className="p-8 sticky top-0 bg-white z-10 border-b border-gray-200">
+                    <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Elementni Tahrirlash ✨</h2>
+                </div>
+                <div className="flex-grow overflow-y-auto px-8">
+                    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="mb-5">
+                                <label className="block mb-2 text-sm font-semibold text-gray-800">ID</label>
                                 <input
                                     type="text"
-                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    value={String(formData[col.key as keyof T] ?? '')}
-                                    onChange={e => handleChange(col.key, e.target.value)}
-                                    disabled={isSubmitting}
+                                    className="border border-gray-300 p-3 w-full rounded-xl bg-gray-50 cursor-not-allowed text-gray-600"
+                                    value={String(formData.id ?? 'Noma\'lum')}
+                                    disabled readOnly
                                 />
+                            </div>
+
+                            {grandParentApiUrl && parentApiUrl ? (
+                                <>
+                                    <div className="mb-5">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-800">Tier1 ID</label>
+                                        <select
+                                            className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            value={selectedGrand}
+                                            onChange={e => {
+                                                const newVal = e.target.value;
+                                                setSelectedGrand(newVal);
+                                                if (newVal && selectedParent && filteredParentOptions.find(opt => opt.id === parseInt(selectedParent)) === undefined) {
+                                                    handleChange('parentId', '');
+                                                }
+                                            }}
+                                            disabled={isSubmitting}
+                                        >
+                                            <option value="">Hech biri</option>
+                                            {grandOptions.map(opt => (
+                                                <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="mb-5">
+                                        <label className="block mb-2 text-sm font-semibold text-gray-800">Parent ID (Tier2)</label>
+                                        <select
+                                            className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            value={selectedParent}
+                                            onChange={e => handleChange('parentId', e.target.value)}
+                                            disabled={isSubmitting}
+                                        >
+                                            <option value="">Hech biri</option>
+                                            {filteredParentOptions.map(opt => (
+                                                <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </>
+                            ) : parentApiUrl ? (
+                                <div className="mb-5">
+                                    <label className="block mb-2 text-sm font-semibold text-gray-800">Parent ID</label>
+                                    <select
+                                        className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        value={selectedParent}
+                                        onChange={e => handleChange('parentId', e.target.value)}
+                                        disabled={isSubmitting}
+                                    >
+                                        <option value="">Hech biri</option>
+                                        {parentOptionsAll.map(opt => (
+                                            <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="mb-5">
+                                    <label className="block mb-2 text-sm font-semibold text-gray-800">Parent ID</label>
+                                    <input
+                                        type="number"
+                                        className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        value={String(formData.parentId ?? '')}
+                                        onChange={e => handleChange('parentId' as keyof T, e.target.value)}
+                                        disabled={isSubmitting}
+                                        placeholder="Parent ID ni kiriting (ixtiyoriy)"
+                                    />
+                                </div>
                             )}
+
+                            {columns.filter(col => col.key !== 'id' && col.key !== 'parentId' && col.key !== 'createdBy' && col.key !== 'createdAt' && col.key !== 'updatedBy' && col.key !== 'updatedAt').map(col => (
+                                <div key={String(col.key)} className="mb-5">
+                                    <label className="block mb-2 text-sm font-semibold text-gray-800">{col.label}</label>
+                                    {col.key === 'status' ? (
+                                        <select
+                                            className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            value={String(formData[col.key as keyof T] ?? 'ACTIVE')}
+                                            onChange={e => handleChange(col.key, e.target.value)}
+                                            disabled={isSubmitting}
+                                        >
+                                            <option value="ACTIVE">ACTIVE</option>
+                                            <option value="INACTIVE">INACTIVE</option>
+                                        </select>
+                                    ) : col.render ? (
+                                        <input
+                                            type="text"
+                                            className="border border-gray-300 p-3 w-full rounded-xl bg-gray-50 cursor-not-allowed text-gray-600"
+                                            value={formData[col.key as keyof T] !== undefined ? String(col.render(formData[col.key as keyof T] as T[typeof col.key]) ?? 'N/A') : 'N/A'}
+                                            disabled
+                                            readOnly
+                                        />
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            value={String(formData[col.key as keyof T] ?? '')}
+                                            onChange={e => handleChange(col.key, e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    ))}
 
-                    {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
-
-                    <div className="flex justify-end space-x-4 mt-8">
+                        {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
+                    </form>
+                </div>
+                <div className="p-8 sticky bottom-0 bg-white z-10 border-t border-gray-200">
+                    <div className="flex justify-end space-x-4">
                         <Button
                             variant="danger"
                             onClick={handleClose}
@@ -89,7 +187,7 @@ export default function EditModal<T extends { id: number }>({ visible, item, onS
                             Saqlash
                         </Button>
                     </div>
-                </form>
+                </div>
             </div>
 
             <ConfirmModal

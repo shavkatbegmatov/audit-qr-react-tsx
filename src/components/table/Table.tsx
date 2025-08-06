@@ -8,18 +8,28 @@ import TableBody from './TableBody';
 import TablePagination from './TablePagination';
 import CreateModal from './CreateModal';
 import EditModal from './EditModal';
-// 1-QADAM: ConfirmModal komponentini import qilish
-import ConfirmModal from '@/components/layout/ConfirmModal'; // Yo'lni o'zingizning loyihadagiga moslang
+import ConfirmModal from '@/components/layout/ConfirmModal';
 
 interface TableProps<T extends { id: number }> {
     apiUrl: string;
     columns: Column<T>[];
+    parentApiUrl?: string;
+    grandParentApiUrl?: string;
+    parentDefaultLabel?: string;
+    grandParentDefaultLabel?: string;
 }
 
-export default function Table<T extends { id: number }>({ apiUrl, columns }: TableProps<T>) {
+export default function Table<T extends { id: number }>({
+    apiUrl,
+    columns,
+    parentApiUrl,
+    grandParentApiUrl,
+    parentDefaultLabel,
+    grandParentDefaultLabel
+}: TableProps<T>) {
     const {
         data, loading, page, total,
-        createItem, updateItem, deleteItem, // Asl `deleteItem` funksiyasi shu yerda
+        createItem, updateItem, deleteItem,
         onSearch, onFilter, onSort, onPageChange,
         sortKey, sortOrder
     } = useTable<T>({ apiUrl, pageSize: 10, columns });
@@ -27,10 +37,9 @@ export default function Table<T extends { id: number }>({ apiUrl, columns }: Tab
     const [showCreate, setShowCreate] = useState(false);
     const [editItem, setEditItem] = useState<Partial<T> | null>(null);
 
-    // 2-QADAM: O'chirishni tasdiqlash uchun kerakli state'larni qo'shish
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<number | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false); // Modal ichidagi yuklanish holati uchun
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openCreate = () => setShowCreate(true);
     const closeCreate = () => setShowCreate(false);
@@ -48,26 +57,21 @@ export default function Table<T extends { id: number }>({ apiUrl, columns }: Tab
         closeEdit();
     };
 
-    // 3-QADAM: O'chirish jarayonini boshqaruvchi funksiyalar
-
-    // Bu funksiya TableRow'dagi "Delete" tugmasi bosilganda ishlaydi
     const handleDeleteRequest = (id: number) => {
-        setItemToDelete(id); // Qaysi ID o'chirilishini eslab qolamiz
-        setIsConfirmModalOpen(true); // Tasdiq modalini ochamiz
+        setItemToDelete(id);
+        setIsConfirmModalOpen(true);
     };
 
-    // Bu funksiya modal oynadagi "Confirm" tugmasi bosilganda ishlaydi
     const handleConfirmDelete = async () => {
         if (itemToDelete !== null) {
             setIsDeleting(true);
-            await deleteItem(itemToDelete); // `useTable` hook'idagi asl o'chirish funksiyasini chaqiramiz
+            await deleteItem(itemToDelete);
             setIsDeleting(false);
             setIsConfirmModalOpen(false);
             setItemToDelete(null);
         }
     };
 
-    // Bu funksiya modal oynadagi "Cancel" tugmasi bosilganda ishlaydi
     const handleCancelDelete = () => {
         setIsConfirmModalOpen(false);
         setItemToDelete(null);
@@ -75,22 +79,27 @@ export default function Table<T extends { id: number }>({ apiUrl, columns }: Tab
 
     return (
         <div className="bg-white border border-gray-200 rounded shadow overflow-hidden">
-            <TableToolbar onSearch={onSearch} onFilter={onFilter} onOpenCreate={openCreate} />
+            <TableToolbar
+                onSearch={onSearch}
+                onFilter={onFilter}
+                onOpenCreate={openCreate}
+                parentApiUrl={parentApiUrl}
+                grandParentApiUrl={grandParentApiUrl}
+                parentDefaultLabel={parentDefaultLabel}
+                grandParentDefaultLabel={grandParentDefaultLabel}
+            />
             <TablePagination page={page} total={total} pageSize={10} onPageChange={onPageChange} />
 
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <TableHeader columns={columns} onSort={onSort} sortKey={sortKey} sortOrder={sortOrder} />
-                    {/* 4-QADAM: TableBody ga `deleteItem` o'rniga `handleDeleteRequest`ni uzatish */}
                     <TableBody data={data} columns={columns} onEdit={openEdit} onDelete={handleDeleteRequest} loading={loading} />
                 </table>
             </div>
 
-            {/* Mavjud modallar */}
-            <CreateModal visible={showCreate} onSubmit={handleCreate} onClose={closeCreate} columns={columns} />
-            <EditModal visible={!!editItem} item={editItem} onSubmit={handleEdit} onClose={closeEdit} columns={columns} />
+            <CreateModal visible={showCreate} onSubmit={handleCreate} onClose={closeCreate} columns={columns} parentApiUrl={parentApiUrl} grandParentApiUrl={grandParentApiUrl} />
+            <EditModal visible={!!editItem} item={editItem} onSubmit={handleEdit} onClose={closeEdit} columns={columns} parentApiUrl={parentApiUrl} grandParentApiUrl={grandParentApiUrl} />
 
-            {/* 5-QADAM: ConfirmModal komponentini render qilish va unga kerakli props'larni berish */}
             <ConfirmModal
                 isOpen={isConfirmModalOpen}
                 onConfirm={handleConfirmDelete}

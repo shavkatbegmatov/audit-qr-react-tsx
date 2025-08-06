@@ -1,12 +1,16 @@
 // src/components/table/useTable.ts
 import { useState, useEffect, useCallback } from 'react';
-import api from '@/services/api';  // Import the custom axios instance
+import api from '@/services/api';
+import React from 'react';
 
-export interface Column<T> {
-    key: keyof T;
-    label: string;
-    sortable?: boolean;
-}
+export type Column<T> = {
+    [K in keyof T]: {
+        key: K;
+        label: string;
+        sortable?: boolean;
+        render?: (value: T[K]) => React.ReactNode;
+    }
+}[keyof T];
 
 export interface TableParams<T> {
     apiUrl: string;
@@ -25,10 +29,13 @@ interface ApiResponse<T> {
     error?: unknown;
 }
 
-export default function useTable<T extends { id: number }>({
-                                                               apiUrl,
-                                                               pageSize = 10
-                                                           }: TableParams<T>) {
+export default function useTable<T extends {
+    id: number;
+    parentId?: number | null
+}>({
+    apiUrl,
+    pageSize = 10
+}: TableParams<T>) {
     const [data, setData] = useState<T[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -52,49 +59,40 @@ export default function useTable<T extends { id: number }>({
             }
 
             const res = await api.get<ApiResponse<T>>(apiUrl, { params });
+
+            let items: T[] = [];
+            let totalElements: number = 0;
+
             if (res.data.success && 'content' in res.data.data && typeof res.data.meta?.totalElements === 'number') {
-                let items: T[] = res.data.data.content ?? [];
-
-                if (sortKey) {
-                    items = [...items].sort((a, b) => {
-                        const aVal = a[sortKey];
-                        const bVal = b[sortKey];
-                        if (aVal == null) return -1;
-                        if (bVal == null) return 1;
-                        if (typeof aVal === 'number' && typeof bVal === 'number') {
-                            return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-                        }
-                        return sortOrder === 'asc'
-                            ? String(aVal).localeCompare(String(bVal))
-                            : String(bVal).localeCompare(String(aVal));
-                    });
-                }
-
-                setTotal(res.data.meta.totalElements);
-                setData(items);
+                items = res.data.data.content ?? [];
+                totalElements = res.data.meta.totalElements;
             } else if (res.data.success && Array.isArray(res.data.data)) {
-                let items: T[] = res.data.data;
-                if (sortKey) {
-                    items = [...items].sort((a, b) => {
-                        const aVal = a[sortKey];
-                        const bVal = b[sortKey];
-                        if (aVal == null) return -1;
-                        if (bVal == null) return 1;
-                        if (typeof aVal === 'number' && typeof bVal === 'number') {
-                            return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-                        }
-                        return sortOrder === 'asc'
-                            ? String(aVal).localeCompare(String(bVal))
-                            : String(bVal).localeCompare(String(aVal));
-                    });
-                }
-                setTotal(items.length);
-                setData(items);
+                items = res.data.data;
+                totalElements = items.length;
             } else {
                 console.error('Unexpected response format:', res.data);
                 setData([]);
                 setTotal(0);
+                return;
             }
+
+            if (sortKey) {
+                items = [...items].sort((a, b) => {
+                    const aVal = a[sortKey];
+                    const bVal = b[sortKey];
+                    if (aVal == null) return -1;
+                    if (bVal == null) return 1;
+                    if (typeof aVal === 'number' && typeof bVal === 'number') {
+                        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                    }
+                    return sortOrder === 'asc'
+                        ? String(aVal).localeCompare(String(bVal))
+                        : String(bVal).localeCompare(String(aVal));
+                });
+            }
+
+            setTotal(totalElements);
+            setData(items);
         } catch (err) {
             console.error(err);
             setData([]);
@@ -105,13 +103,24 @@ export default function useTable<T extends { id: number }>({
     }, [apiUrl, page, pageSize, search, filters, sortKey, sortOrder]);
 
     useEffect(() => {
-        fetchData();
+        void fetchData();
     }, [fetchData]);
 
     // CRUD ops
-    const createItem = async (item: Partial<T>) => { await api.post(apiUrl, item); fetchData(); };
-    const updateItem = async (id: number, item: Partial<T>) => { await api.put(`${apiUrl}/${id}`, item); fetchData(); };
-    const deleteItem = async (id: number) => { await api.delete(`${apiUrl}/${id}`); fetchData(); };
+    const createItem = async (item: Partial<T>) => {
+        await api.post(apiUrl, item);
+        await fetchData();
+    };
+
+    const updateItem = async (id: number, item: Partial<T>) => {
+        await api.put(`${apiUrl}/${id}`, item);
+        await fetchData();
+    };
+
+    const deleteItem = async (id: number) => {
+        await api.delete(`${apiUrl}/${id}`);
+        await fetchData();
+    };
 
     // Handlers
     const onSearch = (q: string) => { setSearch(q); setPage(1); };

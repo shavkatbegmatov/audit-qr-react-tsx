@@ -3,11 +3,11 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/constants';
 import { FaDesktop, FaTable, FaTh, FaCogs, FaAngleRight } from 'react-icons/fa';
+import { BiBarChartSquare } from "react-icons/bi";
 import logoImage from '@/assets/brb_logo_with_name_white.png';
 import { useSidebar } from '@/context/SidebarContext';
-import React, { useEffect, memo, useMemo } from "react"; // `memo` va `useMemo` import qilindi
+import React, { useLayoutEffect, memo, useMemo } from "react";
 
-// NavItem interfeysi o'zgarishsiz qoladi
 interface NavItem {
     label: string;
     route: string;
@@ -15,7 +15,6 @@ interface NavItem {
     subItems?: NavItem[];
 }
 
-// navItems ma'lumotlari o'zgarishsiz qoladi
 const navItems: NavItem[] = [
     { label: 'Boshqaruv paneli', route: ROUTES.ROOT, icon: FaDesktop },
     {
@@ -24,18 +23,18 @@ const navItems: NavItem[] = [
         icon: FaTable,
         subItems: [
             { label: 'Audit obyekt turlari', route: ROUTES.AUDIT_OBJECT_TYPES, icon: FaTable },
-            { label: 'Audit obyekt tarmog\'lari', route: ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS, icon: FaTable },
             { label: 'Audit obyektlari', route: ROUTES.AUDIT_OBJECTS, icon: FaTable },
+            { label: 'Audit obyekt tarmog\'lari', route: ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS, icon: FaTable },
             { label: 'Bloklar', route: ROUTES.BLOCK, icon: FaTable },
             {
                 label: 'Risklar reestri',
                 route: ROUTES.RISK_REGISTRY,
-                icon: FaTable,
+                icon: BiBarChartSquare,
                 subItems: [
                     { label: 'Risklarni baholash mezoni', route: '/risk-registry/list', icon: FaTable },
-                    { label: 'Birinchi darajali risk turlari', route: ROUTES.TIER_1_RISK_TYPES, icon: FaTable },
-                    { label: 'Ikkinchi darajali risk turlari', route: ROUTES.TIER_2_RISK_TYPES, icon: FaTable },
-                    { label: 'Uchunchi darajali risk turlari', route: ROUTES.TIER_3_RISK_TYPES, icon: FaTable },
+                    { label: '1-darajali risk turlari', route: ROUTES.TIER_1_RISK_TYPES, icon: FaTable },
+                    { label: '2-darajali risk turlari', route: ROUTES.TIER_2_RISK_TYPES, icon: FaTable },
+                    { label: '3-darajali risk turlari', route: ROUTES.TIER_3_RISK_TYPES, icon: FaTable },
                 ]
             },
             { label: 'Tarkibiy tuzilmalar', route: '/audit-object-types/sub4', icon: FaTable },
@@ -86,7 +85,6 @@ function findParentsForRoute(items: NavItem[], targetRoute: string, currentParen
     return [];
 }
 
-
 interface SidebarProps {
     isOpen: boolean;
 }
@@ -97,12 +95,17 @@ export default function Sidebar({ isOpen }: SidebarProps) {
 
     // Sahifa birinchi marta yuklanganda yoki marshrut o'zgarganda,
     // aktiv menyuning ota-ona menyularini ochib qo'yish uchun.
-    useEffect(() => {
+    // useEffect ni useLayoutEffect ga o'zgartirdik, flicker ni oldini olish uchun.
+    useLayoutEffect(() => {
         const parents = findParentsForRoute(navItems, location.pathname);
         if (parents.length > 0) {
-            // Ota-ona menyularni ochiqlar ro'yxatiga qo'shamiz.
-            // Bu yerda biz to'g'ridan-to'g'ri yangi ro'yxatni o'rnatamiz.
-            setOpenedSubMenus(Array.from(new Set(parents)));
+            // Ota-ona menyularni ochiqlar ro'yxatiga qo'shamiz, eski ochiq menyularni saqlab.
+            // Bu multiple open ga mos keladi va flicker ni oldini oladi.
+            setOpenedSubMenus((prev) => {
+                const uniqueOpened = new Set(prev);
+                parents.forEach((p) => uniqueOpened.add(p));
+                return Array.from(uniqueOpened);
+            });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.pathname]); // `setOpenedSubMenus` ni dependency ro'yxatidan olib tashladik, chunki u o'zgarmaydi.
@@ -137,11 +140,12 @@ export default function Sidebar({ isOpen }: SidebarProps) {
 interface SidebarItemProps {
     item: NavItem;
     level?: number;
+    isParentOpen?: boolean;
 }
 
 // `React.memo` - bu HOC (High-Order Component). U komponentni o'rab oladi va uning
 // props'lari o'zgarmagan bo'lsa, qayta render bo'lishiga yo'l qo'ymaydi.
-const SidebarItem = memo(function SidebarItem({ item, level = 0 }: SidebarItemProps) {
+const SidebarItem = memo(function SidebarItem({ item, level = 0, isParentOpen = false }: SidebarItemProps) {
     const { openedSubMenus, toggleSubMenu } = useSidebar();
     const location = useLocation();
     const navigate = useNavigate();
@@ -158,7 +162,22 @@ const SidebarItem = memo(function SidebarItem({ item, level = 0 }: SidebarItemPr
     }, [location.pathname, item]);
 
     const isSubOpen = openedSubMenus.includes(item.label);
-    const paddingLeft = 10 + (level * 20);
+    const indent = level * 20;
+    const basePadding = 25;
+
+    const showConnectingLines = level > 0 && isParentOpen;
+
+    const connectingLines = showConnectingLines ? (
+        <div style={{
+            position: 'absolute',
+            left: '0px',
+            top: '50%',
+            width: 20,
+            height: 1,
+            background: '#ef4444',
+            transform: 'translateY(-50%)'
+        }} />
+    ) : null;
 
     // Agar elementning ichki menyulari (subItems) bo'lsa
     if (item.subItems) {
@@ -177,21 +196,27 @@ const SidebarItem = memo(function SidebarItem({ item, level = 0 }: SidebarItemPr
         };
 
         return (
-            <div className="relative">
+            <div>
                 <div
                     onClick={handleParentClick}
-                    style={{ paddingLeft: `${paddingLeft + 15}px` }}
-                    className={`text-white text-base no-underline py-[5px] pr-[30px] leading-[40px] transition duration-300 ease flex items-center cursor-pointer relative border-l-4 ${isParentActive ? 'border-red-500' : 'border-transparent hover:bg-[#33363a]'} ${isParentActive && !isSubOpen ? 'bg-red-500' : ''}`}
+                    style={{ marginLeft: `${indent}px`, paddingLeft: `${basePadding}px` }}
+                    className={`relative text-white text-base no-underline py-[5px] pr-[30px] leading-[40px] transition duration-300 ease flex items-center cursor-pointer border-l-4 ${isParentActive ? 'border-red-500 bg-red-500' : (isParentOpen ? 'border-red-500' : 'border-transparent hover:bg-[#33363a]')}`}
                 >
-                    {item.icon && <item.icon className={`mr-[10px] ${isParentActive ? (isParentActive && !isSubOpen ? 'text-white' : 'text-red-500') : ''}`} />}
+                    {connectingLines}
+                    {item.icon && <item.icon className={`mr-[10px] ${isParentActive ? 'text-white' : (isParentOpen ? 'text-red-500' : '')}`} />}
                     <span className="flex-1 truncate" title={item.label}>{item.label}</span>
                     <FaAngleRight className={`absolute right-[20px] transition-transform duration-300 ${isSubOpen ? 'rotate-90' : ''}`} />
                 </div>
 
-                <div className={`overflow-hidden transition-all duration-300 ease ${isSubOpen ? 'max-h-[999px]' : 'max-h-0'}`}>
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isSubOpen ? 'max-h-[999px]' : 'max-h-0'}`}>
                     <div className="bg-[#262627]">
                         {item.subItems.map((subItem) => (
-                            <SidebarItem key={subItem.label} item={subItem} level={level + 1} />
+                            <SidebarItem
+                                key={subItem.label}
+                                item={subItem}
+                                level={level + 1}
+                                isParentOpen={isSubOpen}
+                            />
                         ))}
                     </div>
                 </div>
@@ -203,9 +228,10 @@ const SidebarItem = memo(function SidebarItem({ item, level = 0 }: SidebarItemPr
     return (
         <NavLink
             to={item.route}
-            style={{ paddingLeft: `${paddingLeft + 15}px` }}
-            className={({ isActive }) => `text-white text-base no-underline flex items-center leading-[40px] transition duration-300 ease border-l-4 ${isActive ? 'bg-red-500 border-red-500' : 'border-transparent hover:bg-red-600'}`}
+            style={{ marginLeft: `${indent}px`, paddingLeft: `${basePadding}px` }}
+            className={({ isActive }) => `relative text-white text-base no-underline flex items-center leading-[40px] transition duration-300 ease border-l-4 ${isActive || isParentOpen ? 'border-red-500' : 'border-transparent hover:bg-red-600'} ${isActive ? 'bg-red-500' : ''}`}
         >
+            {connectingLines}
             {item.icon && <item.icon className="mr-[10px]" />}
             <span className="truncate flex-1" title={item.label}>{item.label}</span>
         </NavLink>

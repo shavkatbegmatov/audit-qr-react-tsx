@@ -16,6 +16,7 @@ const LazyLoginPage = lazy(() => import('@/pages/LoginPage'));
 const LazyDashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const LazyReferencePage = lazy(() => import('@/pages/ReferencePage'));
 const LazyAuditObjectTypesPage = lazy(() => import('@/pages/AuditObjectTypesPage'));
+const LazyAuditObjectPage = lazy(() => import('@/pages/AuditObjectPage'));
 const LazyAuditObjectBranchNetworkPage = lazy(() => import('@/pages/AuditObjectBranchNetworkPage'));
 const LazyBlockPage = lazy(() => import('@/pages/BlockPage'));
 const LazyRiskRegistryPage = lazy(() => import('@/pages/RiskRegistryPage'));
@@ -52,7 +53,7 @@ function App() {
                                         />
                                         <Route
                                             path={ROUTES.AUDIT_OBJECTS}
-                                            element={<LazyAuditObjectBranchNetworkPage />}
+                                            element={<LazyAuditObjectPage />}
                                         />
                                         <Route
                                             path={ROUTES.BLOCK}

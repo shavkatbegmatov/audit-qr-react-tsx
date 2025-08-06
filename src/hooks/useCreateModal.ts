@@ -2,8 +2,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import type { Column } from '@/components/table/useTable';
+import { handleApiError } from './useErrorHandler';
+import { useModalCloseHandlers } from './useModalCloseHandlers';
 
-// Hook uchun propslar interfeysi o'zgarishsiz
 interface UseCreateModalProps<T> {
     onSubmit: (item: Partial<T>) => Promise<void>;
     onClose: () => void;
@@ -11,10 +12,8 @@ interface UseCreateModalProps<T> {
     visible: boolean;
 }
 
-export function useCreateModal<T extends { id: number }>({ onSubmit, onClose, columns, visible }: UseCreateModalProps<T>) {
-    // State'lar
+export function useCreateModal<T extends { id: number; parentId?: number | null }>({ onSubmit, onClose, columns, visible }: UseCreateModalProps<T>) {
     const [formData, setFormData] = useState<Partial<T>>({});
-    // 1-QADAM: Formaning boshlang'ich holatini saqlash uchun state qo'shamiz
     const [initialData, setInitialData] = useState<Partial<T>>({});
     const [showConfirmClose, setShowConfirmClose] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -25,27 +24,27 @@ export function useCreateModal<T extends { id: number }>({ onSubmit, onClose, co
     const initializeForm = useCallback(() => {
         const defaultData: Partial<T> = {};
         if (hasStatusColumn) {
-            defaultData['status' as keyof T] = 'ACTIVE' as any;
+            (defaultData as Record<string, unknown>)['status'] = 'ACTIVE';
         }
+        defaultData.parentId = null;
         setFormData(defaultData);
-        // 2-QADAM: Boshlang'ich holatni ham shu yerda o'rnatamiz
         setInitialData(defaultData);
         setErrorMessage(null);
     }, [hasStatusColumn]);
 
-    // Bu effekt o'zgarishsiz qoladi
     useEffect(() => {
         if (visible) {
             initializeForm();
         }
     }, [visible, initializeForm]);
 
-    // Bu funksiya o'zgarishsiz qoladi
     const handleChange = useCallback((key: keyof T, value: string) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [key]: key === 'parentId' ? (value ? parseInt(value, 10) : null) : value
+        }));
     }, []);
 
-    // Bu funksiya o'zgarishsiz qoladi
     const handleSubmit = useCallback(async () => {
         setIsSubmitting(true);
         setErrorMessage(null);
@@ -53,8 +52,8 @@ export function useCreateModal<T extends { id: number }>({ onSubmit, onClose, co
             await onSubmit(formData);
             toast.success('Muvaffaqiyatli yaratildi!');
             onClose();
-        } catch (error: any) {
-            const errMsg = error.response?.data?.error?.message || 'Xatolik yuz berdi. Iltimos, qayta urunib ko\'ring.';
+        } catch (error) {
+            const errMsg = handleApiError(error);
             setErrorMessage(errMsg);
             toast.error(errMsg);
         } finally {
@@ -62,9 +61,7 @@ export function useCreateModal<T extends { id: number }>({ onSubmit, onClose, co
         }
     }, [formData, onSubmit, onClose]);
 
-    // 3-QADAM: O'zgarishni tekshirish mantiqini to'g'rilaymiz
     const handleClose = useCallback(() => {
-        // Joriy ma'lumotlarni boshlang'ich ma'lumotlar bilan solishtiramiz
         const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialData);
 
         if (hasChanges && !isSubmitting) {
@@ -72,31 +69,14 @@ export function useCreateModal<T extends { id: number }>({ onSubmit, onClose, co
         } else {
             onClose();
         }
-    }, [formData, initialData, isSubmitting, onClose]); // dependencylarga initialData qo'shildi
+    }, [formData, initialData, isSubmitting, onClose]);
 
-    // Qolgan funksiyalar va effektlar o'zgarishsiz
-    const confirmClose = useCallback(() => {
-        setShowConfirmClose(false);
-        onClose();
-    }, [onClose]);
-
-    const cancelClose = useCallback(() => {
-        setShowConfirmClose(false);
-    }, []);
-
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                handleClose();
-            }
-        };
-        if (visible) {
-            document.addEventListener('keydown', handleKeyDown);
-        }
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [visible, handleClose]);
+    const { confirmClose, cancelClose } = useModalCloseHandlers({
+        setShowConfirmClose,
+        onClose,
+        visible,
+        handleClose
+    });
 
     return {
         formData,

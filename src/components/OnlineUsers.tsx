@@ -1,20 +1,10 @@
+// src/components/OnlineUsers.tsx
 import React from 'react';
 import { useWebSocket } from '../context/WebSocketContext';
+import { formatDate } from '../utils/dateUtils';
 
 const OnlineUsers: React.FC = () => {
     const { onlineUsers, error } = useWebSocket();
-
-    // DD.MM.YYYY HH:MM:SS
-    const formatTimestamp = (timestamp: string) => {
-        const date = new Date(timestamp);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
-    };
 
     if (error) {
         return <div className="text-red-500 p-4">{error}</div>;
@@ -43,7 +33,7 @@ const OnlineUsers: React.FC = () => {
                             } text-green-700`}
                         >
                             <td className="border px-6 py-3 font-medium">{user.username}</td>
-                            <td className="border px-6 py-3">{formatTimestamp(user.onlineSince)}</td>
+                            <td className="border px-6 py-3">{formatDate(user.onlineSince, true)}</td>
                             <td className="border px-6 py-3">{user.currentPage}</td>
                         </tr>
                     ))}
