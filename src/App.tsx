@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/context/AuthProvider';
 import { WebSocketProvider } from '@/context/WebSocketProvider';
 import SidebarProvider from '@/context/SidebarContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -19,6 +19,7 @@ const LazyAuditObjectTypesPage = lazy(() => import('@/pages/AuditObjectTypesPage
 const LazyAuditObjectPage = lazy(() => import('@/pages/AuditObjectPage'));
 const LazyAuditObjectBranchNetworkPage = lazy(() => import('@/pages/AuditObjectBranchNetworkPage'));
 const LazyBlockPage = lazy(() => import('@/pages/BlockPage'));
+const LazyOrgStructurePage = lazy(() => import('@/pages/OrgStructurePage'));
 const LazyRiskRegistryPage = lazy(() => import('@/pages/RiskRegistryPage'));
 const LazyTier1RiskTypesPage = lazy(() => import('@/pages/Tier1RiskTypesPage'));
 const LazyTier2RiskTypesPage = lazy(() => import('@/pages/Tier2RiskTypesPage'));
@@ -58,6 +59,10 @@ function App() {
                                         <Route
                                             path={ROUTES.BLOCK}
                                             element={<LazyBlockPage />}
+                                        />
+                                        <Route
+                                            path={ROUTES.ORG_STRUCTURE}
+                                            element={<LazyOrgStructurePage />}
                                         />
                                         <Route
                                             path={ROUTES.RISK_REGISTRY}

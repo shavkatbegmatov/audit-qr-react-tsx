@@ -2,28 +2,43 @@
 import Table from '@/components/table/Table';
 import type { Column } from '@/components/table/useTable';
 import { ROUTES } from "@/utils/constants.ts";
+import {formatDate} from "@/utils/dateUtils.ts";
 
-interface AuditType {
+interface Block {
     id: number;
     code: string;
     name: string;
     description: string;
     status: string;
+    parentId: number | null;
+    createdBy: string;
+    createdAt: string;
+    updatedBy: string;
+    updatedAt: string;
 }
 
 export default function BlockPage() {
-    const columns: Column<AuditType>[] = [
+    const columns: Column<Block>[] = [
         { key: 'id',          label: 'ID',          sortable: true },
         { key: 'code',        label: 'Code',        sortable: true },
         { key: 'name',        label: 'Name',        sortable: true },
         { key: 'description', label: 'Description', sortable: true},
         { key: 'status',      label: 'Status',      sortable: true },
+        { key: 'parentId',    label: 'Parent ID (Block)',   sortable: true },
+        { key: 'createdBy',   label: 'Created By',  sortable: true },
+        { key: 'createdAt',   label: 'Created At',  sortable: true, render: (value) => formatDate(value) },
+        { key: 'updatedBy',   label: 'Updated By',  sortable: true },
+        { key: 'updatedAt',   label: 'Updated At',  sortable: true, render: (value) => formatDate(value) },
     ];
 
     return (
-        <Table<AuditType>
+        <Table<Block>
             apiUrl={ROUTES.BLOCK}
             columns={columns}
+            parentApiUrl={ROUTES.BLOCK}
+            grandParentApiUrl={ROUTES.BLOCK}
+            parentDefaultLabel={"Yuqori darajali blok"}
+            grandParentDefaultLabel={"Yuqori yuqori darajali blok"}
         />
     );
 }

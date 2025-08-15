@@ -36,6 +36,7 @@ export default function AuditObjectPage() {
             apiUrl={ROUTES.AUDIT_OBJECTS}
             columns={columns}
             parentApiUrl={ROUTES.AUDIT_OBJECT_TYPES}
+            parentDefaultLabel={"Audit obyekt turlari"} // "Audit Object Types: Barchasi"
         />
     );
 }

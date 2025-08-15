@@ -37,7 +37,7 @@ const navItems: NavItem[] = [
                     { label: '3-darajali risk turlari', route: ROUTES.TIER_3_RISK_TYPES, icon: FaTable },
                 ]
             },
-            { label: 'Tarkibiy tuzilmalar', route: '/audit-object-types/sub4', icon: FaTable },
+            { label: 'Tarkibiy tuzilmalar', route: ROUTES.ORG_STRUCTURE, icon: FaTable },
             { label: 'Auditorlar', route: '/audit-object-types/sub5', icon: FaTable },
             { label: 'Obyekt bo\'limlari', route: '/audit-object-types/sub6', icon: FaTable },
             { label: 'Qo\'shimcha reestrlar', route: '/audit-object-types/sub8', icon: FaTable },

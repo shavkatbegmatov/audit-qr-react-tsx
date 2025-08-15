@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from './auth-context';
 import { STORAGE_KEYS, API_ENDPOINTS } from '@/utils/constants';
 import type { AuditLog } from '@/types/LogEntry';
 import api from '@/services/api';

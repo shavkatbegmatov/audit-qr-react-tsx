@@ -1,7 +1,7 @@
 import React, { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import useAuthService from '@/services/authService';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/auth-context';
 import { ROUTES } from '@/utils/constants';
 
 interface LoginPageProps {

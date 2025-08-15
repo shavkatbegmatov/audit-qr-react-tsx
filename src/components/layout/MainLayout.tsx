@@ -1,7 +1,7 @@
 // src/components/layout/MainLayout.tsx
 import { type ReactNode, useState, Suspense } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth-context";
 
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';

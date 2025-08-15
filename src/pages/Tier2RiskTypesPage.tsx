@@ -36,6 +36,7 @@ export default function Tier2RiskTypesPage() {
             apiUrl={ROUTES.TIER_2_RISK_TYPES}
             columns={columns}
             parentApiUrl={ROUTES.TIER_1_RISK_TYPES}
+            parentDefaultLabel={"1-darajali risk"}
         />
     );
 }

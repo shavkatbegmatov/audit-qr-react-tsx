@@ -34,7 +34,40 @@ export default function CreateModal<T extends { id: number; parentId?: number | 
     const [selectedGrand, setSelectedGrand] = useState('');
     const selectedParent = String(formData.parentId ?? '');
 
-    const filteredParentOptions = selectedGrand ? parentOptionsAll.filter(opt => opt.parentId === parseInt(selectedGrand)) : parentOptionsAll;
+    const [selectedDepth, setSelectedDepth] = useState('1');
+
+    const isRecursive = grandParentApiUrl && parentApiUrl && grandParentApiUrl === parentApiUrl;
+
+    const depthLabels: { [key: string]: string } = {
+        '1': '1-daraja: Blok direktorlari',
+        '2': '2-daraja: Departament direktorlari',
+        '3': '3-daraja: Boshqarma boshliqlari',
+    };
+
+    let filteredParentOptions: typeof parentOptionsAll = [];
+
+    if (isRecursive) {
+        const depth1 = parentOptionsAll.filter(opt => opt.parentId === null);
+        const depth2 = parentOptionsAll.filter(opt => depth1.some(d1 => d1.id === opt.parentId));
+
+        if (selectedDepth === '2') {
+            filteredParentOptions = depth1;
+        } else if (selectedDepth === '3') {
+            filteredParentOptions = depth2;
+        }
+    } else {
+        filteredParentOptions = selectedGrand ? parentOptionsAll.filter(opt => opt.parentId === parseInt(selectedGrand)) : parentOptionsAll;
+    }
+
+    const handleDepthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newDepth = e.target.value;
+        setSelectedDepth(newDepth);
+        if (newDepth === '1') {
+            handleChange('parentId', '');
+        } else if (selectedParent && !filteredParentOptions.some(opt => opt.id === parseInt(selectedParent))) {
+            handleChange('parentId', '');
+        }
+    };
 
     if (!visible) return null;
 
@@ -70,40 +103,76 @@ export default function CreateModal<T extends { id: number; parentId?: number | 
 
                             {grandParentApiUrl && parentApiUrl ? (
                                 <>
-                                    <div className="mb-5">
-                                        <label className="block mb-2 text-sm font-semibold text-gray-800">Tier1 ID</label>
-                                        <select
-                                            className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
-                                            value={selectedGrand}
-                                            onChange={e => {
-                                                const newVal = e.target.value;
-                                                setSelectedGrand(newVal);
-                                                if (newVal && selectedParent && filteredParentOptions.find(opt => opt.id === parseInt(selectedParent)) === undefined) {
-                                                    handleChange('parentId', '');
-                                                }
-                                            }}
-                                            disabled={isSubmitting}
-                                        >
-                                            <option value="">Hech biri</option>
-                                            {grandOptions.map(opt => (
-                                                <option key={opt.id} value={opt.id}>{opt.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="mb-5">
-                                        <label className="block mb-2 text-sm font-semibold text-gray-800">Parent ID (Tier2)</label>
-                                        <select
-                                            className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
-                                            value={selectedParent}
-                                            onChange={e => handleChange('parentId', e.target.value)}
-                                            disabled={isSubmitting}
-                                        >
-                                            <option value="">Hech biri</option>
-                                            {filteredParentOptions.map(opt => (
-                                                <option key={opt.id} value={opt.id}>{opt.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    {isRecursive ? (
+                                        <>
+                                            <div className="mb-5">
+                                                <label className="block mb-2 text-sm font-semibold text-gray-800">Daraja</label>
+                                                <select
+                                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                                    value={selectedDepth}
+                                                    onChange={handleDepthChange}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    {Object.entries(depthLabels).map(([value, label]) => (
+                                                        <option key={value} value={value}>{label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            {selectedDepth !== '1' && (
+                                                <div className="mb-5">
+                                                    <label className="block mb-2 text-sm font-semibold text-gray-800">Ota ID (Oldingi daraja)</label>
+                                                    <select
+                                                        className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                                        value={selectedParent}
+                                                        onChange={e => handleChange('parentId', e.target.value)}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        <option value="">Hech biri</option>
+                                                        {filteredParentOptions.map(opt => (
+                                                            <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="mb-5">
+                                                <label className="block mb-2 text-sm font-semibold text-gray-800">Tier1 ID</label>
+                                                <select
+                                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                                    value={selectedGrand}
+                                                    onChange={e => {
+                                                        const newVal = e.target.value;
+                                                        setSelectedGrand(newVal);
+                                                        if (newVal && selectedParent && filteredParentOptions.find(opt => opt.id === parseInt(selectedParent)) === undefined) {
+                                                            handleChange('parentId', '');
+                                                        }
+                                                    }}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    <option value="">Hech biri</option>
+                                                    {grandOptions.map(opt => (
+                                                        <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="mb-5">
+                                                <label className="block mb-2 text-sm font-semibold text-gray-800">Parent ID (Tier2)</label>
+                                                <select
+                                                    className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300 shadow-sm hover:shadow-md"
+                                                    value={selectedParent}
+                                                    onChange={e => handleChange('parentId', e.target.value)}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    <option value="">Hech biri</option>
+                                                    {filteredParentOptions.map(opt => (
+                                                        <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </>
+                                    )}
                                 </>
                             ) : parentApiUrl ? (
                                 <div className="mb-5">

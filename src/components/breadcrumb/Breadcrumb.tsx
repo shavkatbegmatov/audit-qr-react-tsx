@@ -12,6 +12,10 @@ const Breadcrumb: React.FC = () => {
         'audit-object-branch-networks': 'Audit obyekt tarmog\'lari',
         'audit-objects': 'Audit obyektlari',
         'audit-logs': 'Audit Loglari',
+        'risk-registry': 'Risklar reestri',
+        'tier1-risk-types': '1-darajali risklar',
+        'tier2-risk-types': '2-darajali risklar',
+        'tier3-risk-types': '3-darajali risklar',
         'roles': 'Rollar',
         'users': 'Foydalanuvchilar',
         // Add more routes as needed, including sub-routes from Sidebar navItems
