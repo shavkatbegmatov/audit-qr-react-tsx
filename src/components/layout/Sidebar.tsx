@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
             },
             { label: 'Tarkibiy tuzilmalar', route: ROUTES.ORG_STRUCTURE, icon: FaTable },
             { label: 'Auditorlar', route: '/audit-object-types/sub5', icon: FaTable },
-            { label: 'Obyekt bo\'limlari', route: '/audit-object-types/sub6', icon: FaTable },
+            { label: 'Obyekt bo\'limlari', route: ROUTES.SUBJECT_SECTIONS, icon: FaTable },
             { label: 'Qo\'shimcha reestrlar', route: '/audit-object-types/sub8', icon: FaTable },
             { label: 'Aniqlangan holatlar reyestri', route: '/audit-object-types/sub9', icon: FaTable },
         ]

@@ -23,6 +23,7 @@ export const ROUTES = {
     AUDIT_OBJECTS: '/audit-objects',
     BLOCK: '/blocks',
     ORG_STRUCTURE: '/org-structure',
+    SUBJECT_SECTIONS: '/subject-sections',
     RISK_REGISTRY: '/risk-registry',
     TIER_1_RISK_TYPES: '/tier1-risk-types',
     TIER_2_RISK_TYPES: '/tier2-risk-types',

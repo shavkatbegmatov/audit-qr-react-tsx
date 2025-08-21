@@ -20,6 +20,7 @@ const LazyAuditObjectPage = lazy(() => import('@/pages/AuditObjectPage'));
 const LazyAuditObjectBranchNetworkPage = lazy(() => import('@/pages/AuditObjectBranchNetworkPage'));
 const LazyBlockPage = lazy(() => import('@/pages/BlockPage'));
 const LazyOrgStructurePage = lazy(() => import('@/pages/OrgStructurePage'));
+const LazySubjectSectionsPage = lazy(() => import('@/pages/SubjectSectionsPage'));
 const LazyRiskRegistryPage = lazy(() => import('@/pages/RiskRegistryPage'));
 const LazyTier1RiskTypesPage = lazy(() => import('@/pages/Tier1RiskTypesPage'));
 const LazyTier2RiskTypesPage = lazy(() => import('@/pages/Tier2RiskTypesPage'));
@@ -63,6 +64,10 @@ function App() {
                                         <Route
                                             path={ROUTES.ORG_STRUCTURE}
                                             element={<LazyOrgStructurePage />}
+                                        />
+                                        <Route
+                                            path={ROUTES.SUBJECT_SECTIONS}
+                                            element={<LazySubjectSectionsPage />}
                                         />
                                         <Route
                                             path={ROUTES.RISK_REGISTRY}

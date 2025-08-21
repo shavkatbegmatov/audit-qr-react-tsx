@@ -19,26 +19,28 @@ const clearTokens = () => {
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    // Dastlabki yuklanish uchun alohida state
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
     const navigate = useNavigate();
     const { logout: apiLogout } = useAuthService();
 
     const markLoggedOut = useCallback((redirect: boolean) => {
         setIsAuthenticated(false);
         setIsAdmin(false);
+        clearTokens();
         if (redirect) navigate(ROUTES.LOGIN, { replace: true });
     }, [navigate]);
 
-    const checkToken = useCallback(async (): Promise<boolean> => {
-        setIsLoading(true);
+    // Barcha tekshiruv mantig'ini o'z ichiga olgan asosiy funksiya
+    const performAuthCheck = useCallback(async (): Promise<boolean> => {
         try {
-            const at = getAccess();
+            let at = getAccess();
             const rt = getRefresh();
+
             if (!at) {
                 if (rt) {
-                    await refreshToken();
+                    at = await refreshToken(); // Yangilangan tokenni olamiz
                 } else {
-                    clearTokens();
                     markLoggedOut(false);
                     return false;
                 }
@@ -46,32 +48,31 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                 const ok = await validateToken(at);
                 if (!ok) {
                     if (rt) {
-                        await refreshToken();
+                        at = await refreshToken();
                     } else {
-                        clearTokens();
                         markLoggedOut(false);
                         return false;
                     }
                 }
             }
+
+            // Yangilangan tokenni qayta tekshirish
             const fresh = getAccess();
             if (!fresh) {
-                clearTokens();
                 markLoggedOut(false);
                 return false;
             }
+
             const { authorities = [] } = jwtDecode<JwtPayload>(fresh);
             setIsAdmin(authorities.includes('ROLE_ADMIN'));
             setIsAuthenticated(true);
             return true;
         } catch {
-            clearTokens();
             markLoggedOut(false);
             return false;
-        } finally {
-            setIsLoading(false);
         }
     }, [markLoggedOut]);
+
 
     const autoRefreshToken = useCallback(async () => {
         const access = getAccess();
@@ -85,26 +86,33 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
             if (secondsLeft <= 30) {
                 await refreshToken();
-                await checkToken();
             }
         } catch {
-            // Ignore for now, as checkToken will handle errors
+            // Xatoliklarni performAuthCheck hal qiladi
         }
-    }, [checkToken]);
+    }, []);
 
     useEffect(() => {
         let mounted = true;
 
+        // 1. Dastlabki, bloklaydigan tekshiruv
         (async () => {
-            const ok = await checkToken();
-            if (!ok && mounted) navigate(ROUTES.LOGIN, { replace: true });
+            const ok = await performAuthCheck();
+            if (!ok && mounted) {
+                navigate(ROUTES.LOGIN, { replace: true });
+            }
+            // Dastlabki yuklanish tugadi
+            setIsInitialLoading(false);
         })();
 
-        const onStorage = () => { void checkToken(); };
+        // 2. Fon rejimida, bloklamaydigan tekshiruvlar
+        const onStorage = () => { void performAuthCheck(); };
         window.addEventListener('storage', onStorage);
 
         const onVisibilityChange = async () => {
-            if (document.visibilityState === 'visible') await checkToken();
+            if (document.visibilityState === 'visible') {
+                await performAuthCheck();
+            }
         };
         document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -116,9 +124,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             document.removeEventListener('visibilitychange', onVisibilityChange);
             clearInterval(interval);
         };
-    }, [checkToken, autoRefreshToken, navigate]);
+        // dependencylarni to'g'rilaymiz
+    }, [performAuthCheck, autoRefreshToken, navigate]);
 
-    const login = useCallback(async () => { await checkToken(); }, [checkToken]);
+    const login = useCallback(async () => { await performAuthCheck(); }, [performAuthCheck]);
 
     const logout = useCallback(async () => {
         try {
@@ -126,18 +135,21 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         } catch (err) {
             console.warn('logout failed (ignored)', err);
         } finally {
-            clearTokens();
             markLoggedOut(true);
         }
     }, [apiLogout, markLoggedOut]);
 
     const value = useMemo<AuthContextType>(() => ({
-        isAuthenticated, isAdmin, login, logout, isLoading
-    }), [isAuthenticated, isAdmin, login, logout, isLoading]);
+        isAuthenticated,
+        isAdmin,
+        login,
+        logout,
+        isLoading: isInitialLoading // Faqat dastlabki yuklanishda true bo'ladi
+    }), [isAuthenticated, isAdmin, login, logout, isInitialLoading]);
 
     return (
         <AuthContext.Provider value={value}>
-            {isLoading ? (
+            {isInitialLoading ? (
                 <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     Loading...
                 </div>
