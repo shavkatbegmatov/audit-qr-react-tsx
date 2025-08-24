@@ -1,28 +1,26 @@
 // src/components/breadcrumb/Breadcrumb.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { findBreadcrumbTrail } from '@/utils/routeUtils';
 
 const Breadcrumb: React.FC = () => {
     const location = useLocation();
-    const pathnames = location.pathname.split('/').filter((x) => x);
 
-    // Define a map for human-readable titles based on routes
-    const routeTitles: { [key: string]: string } = {
-        'audit-object-types': 'Audit obyekt turlari',
-        'audit-object-branch-networks': 'Audit obyekt tarmog\'lari',
-        'audit-objects': 'Audit obyektlari',
-        'audit-logs': 'Audit Loglari',
-        'risk-registry': 'Risklar reestri',
-        'tier1-risk-types': '1-darajali risklar',
-        'tier2-risk-types': '2-darajali risklar',
-        'tier3-risk-types': '3-darajali risklar',
-        'roles': 'Rollar',
-        'users': 'Foydalanuvchilar',
-        // Add more routes as needed, including sub-routes from Sidebar navItems
-        'sub1': 'Sub Item 1', // Example for sub-items
-        'sub2': 'Sub Item 2',
-        // For nested, you can handle logic accordingly
-    };
+    // Joriy yo'l uchun ierarxiyani olamiz
+    const breadcrumbTrail = findBreadcrumbTrail(location.pathname);
+
+    // Agar yo'l bo'sh bo'lsa yoki asosiy sahifa bo'lsa, breadcrumb ko'rsatilmaydi
+    if (location.pathname === '/' || breadcrumbTrail.length === 0) {
+        return (
+            <nav aria-label="breadcrumb" className="p-4 bg-white shadow-md">
+                <ol className="list-reset flex text-gray-700">
+                    <li>
+                        <span className="text-gray-500">Boshqaruv paneli</span>
+                    </li>
+                </ol>
+            </nav>
+        );
+    }
 
     return (
         <nav aria-label="breadcrumb" className="p-4 bg-white shadow-md">
@@ -30,19 +28,19 @@ const Breadcrumb: React.FC = () => {
                 <li>
                     <Link to="/" className="text-blue-600 hover:text-blue-700">Boshqaruv paneli</Link>
                 </li>
-                {pathnames.map((value, index) => {
-                    const to = `/${pathnames.slice(0, index + 1).join('/')}`;
-                    const title = routeTitles[value] || value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
-                    const isLast = index === pathnames.length - 1;
+                {breadcrumbTrail.map((item, index) => {
+                    const isLast = index === breadcrumbTrail.length - 1;
 
                     return (
-                        <React.Fragment key={to}>
+                        <React.Fragment key={item.route}>
                             <li className="mx-2">/</li>
                             <li>
                                 {isLast ? (
-                                    <span className="text-gray-500">{title}</span>
+                                    <span className="text-gray-500">{item.label}</span>
                                 ) : (
-                                    <Link to={to} className="text-blue-600 hover:text-blue-700">{title}</Link>
+                                    <Link to={item.route} className="text-blue-600 hover:text-blue-700">
+                                        {item.label}
+                                    </Link>
                                 )}
                             </li>
                         </React.Fragment>

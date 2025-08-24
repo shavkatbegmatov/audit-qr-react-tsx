@@ -1,67 +1,18 @@
 // src/components/Sidebar.tsx
 
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/utils/constants';
-import { FaDesktop, FaTable, FaTh, FaCogs, FaAngleRight } from 'react-icons/fa';
-import { BiBarChartSquare } from "react-icons/bi";
+import { FaAngleRight } from 'react-icons/fa';
 import logoImage from '@/assets/brb_logo_with_name_white.png';
 import { useSidebar } from '@/context/SidebarContext';
-import React, { useLayoutEffect, memo, useMemo } from "react";
+import { useLayoutEffect, memo, useMemo } from "react";
 
-interface NavItem {
-    label: string;
-    route: string;
-    icon?: React.ComponentType<{ className?: string }>;
-    subItems?: NavItem[];
-}
-
-const navItems: NavItem[] = [
-    { label: 'Boshqaruv paneli', route: ROUTES.ROOT, icon: FaDesktop },
-    {
-        label: "Asosiy ma'lumotlar",
-        route: ROUTES.REFERENCE,
-        icon: FaTable,
-        subItems: [
-            { label: 'Audit obyekt turlari', route: ROUTES.AUDIT_OBJECT_TYPES, icon: FaTable },
-            { label: 'Audit obyektlari', route: ROUTES.AUDIT_OBJECTS, icon: FaTable },
-            { label: 'Audit obyekt tarmog\'lari', route: ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS, icon: FaTable },
-            { label: 'Bloklar', route: ROUTES.BLOCK, icon: FaTable },
-            {
-                label: 'Risklar reestri',
-                route: ROUTES.RISK_REGISTRY,
-                icon: BiBarChartSquare,
-                subItems: [
-                    { label: 'Risklarni baholash mezoni', route: '/risk-registry/list', icon: FaTable },
-                    { label: '1-darajali risk turlari', route: ROUTES.TIER_1_RISK_TYPES, icon: FaTable },
-                    { label: '2-darajali risk turlari', route: ROUTES.TIER_2_RISK_TYPES, icon: FaTable },
-                    { label: '3-darajali risk turlari', route: ROUTES.TIER_3_RISK_TYPES, icon: FaTable },
-                ]
-            },
-            { label: 'Tarkibiy tuzilmalar', route: ROUTES.ORG_STRUCTURE, icon: FaTable },
-            { label: 'Auditorlar', route: '/audit-object-types/sub5', icon: FaTable },
-            { label: 'Obyekt bo\'limlari', route: ROUTES.SUBJECT_SECTIONS, icon: FaTable },
-            { label: 'Qo\'shimcha reestrlar', route: '/audit-object-types/sub8', icon: FaTable },
-            { label: 'Aniqlangan holatlar reyestri', route: '/audit-object-types/sub9', icon: FaTable },
-        ]
-    },
-    { label: 'Audit Loglari', route: ROUTES.AUDIT_LOGS, icon: FaTh },
-    {
-        label: 'Xavfsizlik',
-        route: '/security',
-        icon: FaCogs,
-        subItems: [
-            { label: 'Foydalanuvchilar', route: ROUTES.USERS, icon: FaTable },
-            { label: 'Rollar', route: ROUTES.ROLES, icon: FaTable },
-        ]
-    },
-];
+// 1. O'ZGARISH: Markaziy konfiguratsiya faylidan NavItem interfeysi va navItems massivini import qilamiz.
+import { navItems, type NavItem } from '@/config/navConfig';
 
 // Bu funksiya marshrut bo'yicha ota-ona menyularni topadi.
-// U faqat marshrut o'zgarganda kerak, shuning uchun uni Sidebar komponentidan tashqarida qoldiramiz.
+// U endi import qilingan `navItems` bilan ishlaydi.
 function findParentsForRoute(items: NavItem[], targetRoute: string, currentParents: string[] = []): string[] {
     for (const item of items) {
-        // Agar joriy elementning yo'li maqsadli yo'l bilan bir xil bo'lsa,
-        // va uning sub-elementlari bo'lsa, demak, bu ota-ona hisoblanadi.
         if (item.route === targetRoute && item.subItems) {
             return [...currentParents, item.label];
         }
@@ -69,14 +20,10 @@ function findParentsForRoute(items: NavItem[], targetRoute: string, currentParen
         if (item.subItems) {
             const found = findParentsForRoute(item.subItems, targetRoute, [...currentParents, item.label]);
             if (found.length > 0) {
-                // Agar ichki elementlardan topilsa, bu topilgan yo'lni qaytaramiz
                 return found;
             }
         }
     }
-    // Agar hech narsa topilmasa, bo'sh massiv qaytaramiz.
-    // Marshrut sub-item bo'lmasa, ota-onasi bo'lmaydi.
-    // Agar marshrut topilsa-yu, subItems bo'lmasa, bizga faqat uning ota-onalari kerak, o'zi emas.
     const directParent = items.find(item => item.subItems?.some(sub => sub.route === targetRoute));
     if (directParent) {
         return [...currentParents, directParent.label];
@@ -93,14 +40,11 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     const location = useLocation();
     const { setOpenedSubMenus } = useSidebar();
 
-    // Sahifa birinchi marta yuklanganda yoki marshrut o'zgarganda,
-    // aktiv menyuning ota-ona menyularini ochib qo'yish uchun.
-    // useEffect ni useLayoutEffect ga o'zgartirdik, flicker ni oldini olish uchun.
+    // Sahifa birinchi marta yuklanganda, aktiv menyuning ota-ona menyularini ochib qo'yish uchun.
     useLayoutEffect(() => {
+        // 2. O'ZGARISH: Funksiya endi import qilingan `navItems` dan foydalanadi.
         const parents = findParentsForRoute(navItems, location.pathname);
         if (parents.length > 0) {
-            // Ota-ona menyularni ochiqlar ro'yxatiga qo'shamiz, eski ochiq menyularni saqlab.
-            // Bu multiple open ga mos keladi va flicker ni oldini oladi.
             setOpenedSubMenus((prev) => {
                 const uniqueOpened = new Set(prev);
                 parents.forEach((p) => uniqueOpened.add(p));
@@ -108,11 +52,11 @@ export default function Sidebar({ isOpen }: SidebarProps) {
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [location.pathname]); // `setOpenedSubMenus` ni dependency ro'yxatidan olib tashladik, chunki u o'zgarmaydi.
+    }, [location.pathname]); // `setOpenedSubMenus` o'zgarmas funksiya bo'lgani uchun dependencylardan olib tashlandi.
 
-    // `navItems` o'zgarmas ekan, menyu elementlarini `useMemo` bilan keshlaymiz.
-    // Bu `Sidebar` har safar qayta render bo'lganda `SidebarItem`larni qaytadan yaratishning oldini oladi.
+    // Menyu elementlarini `useMemo` bilan keshlaymiz.
     const memoizedNavItems = useMemo(() => {
+        // 3. O'ZGARISH: `map` funksiyasi endi import qilingan `navItems` ustida ishlaydi.
         return navItems.map((item) => (
             <SidebarItem key={item.label} item={item} />
         ));
@@ -135,23 +79,19 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     );
 }
 
-// ===== SidebarItem Komponenti (OPTIMALLASHTIRILGAN) =====
+// ===== SidebarItem Komponenti (O'ZGARISHLARSIZ QOLADI) =====
 
 interface SidebarItemProps {
-    item: NavItem;
+    item: NavItem; // Bu interfeys endi import qilinmoqda
     level?: number;
     isParentOpen?: boolean;
 }
 
-// `React.memo` - bu HOC (High-Order Component). U komponentni o'rab oladi va uning
-// props'lari o'zgarmagan bo'lsa, qayta render bo'lishiga yo'l qo'ymaydi.
 const SidebarItem = memo(function SidebarItem({ item, level = 0, isParentOpen = false }: SidebarItemProps) {
     const { openedSubMenus, toggleSubMenu } = useSidebar();
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Marshrutning aktivligini tekshirish uchun `useMemo`dan foydalanamiz.
-    // Bu hisob-kitob faqat `location.pathname` yoki `item` o'zgarganda ishlaydi.
     const isParentActive = useMemo(() => {
         const isAnySubItemActive = (navItem: NavItem): boolean => {
             return navItem.subItems?.some(
@@ -179,15 +119,11 @@ const SidebarItem = memo(function SidebarItem({ item, level = 0, isParentOpen = 
         }} />
     ) : null;
 
-    // Agar elementning ichki menyulari (subItems) bo'lsa
     if (item.subItems) {
         const handleParentClick = () => {
-            // Agar joriy sahifa shu menyuga tegishli bo'lsa, shunchaki ochamiz/yopamiz.
             if (location.pathname === item.route) {
                 toggleSubMenu(item.label);
             } else {
-                // Agar boshqa sahifada bo'lsak, avval menyuni ochamiz (agar yopiq bo'lsa),
-                // keyin o'sha menyu sahifasiga o'tamiz.
                 if (!isSubOpen) {
                     toggleSubMenu(item.label);
                 }
@@ -224,7 +160,6 @@ const SidebarItem = memo(function SidebarItem({ item, level = 0, isParentOpen = 
         );
     }
 
-    // Agar oddiy menyu bandi bo'lsa (ichki menyusi yo'q)
     return (
         <NavLink
             to={item.route}
