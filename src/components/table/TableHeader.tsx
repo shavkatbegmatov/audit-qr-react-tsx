@@ -15,20 +15,21 @@ export default function TableHeader<T>({
         <tr>
             {columns.map(col => (
                 <th
-                    key={String(col.key)}
-                    onClick={() => col.sortable && onSort(col.key)}
-                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${col.sortable ? 'cursor-pointer' : ''}`}
+                    key={String((col as any).key)}
+                    onClick={() => (col as any).sortable && onSort((col as any).key)}
+                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${(col as any).sortable ? 'cursor-pointer' : ''}`}
                 >
                     <div className="flex items-center">
-                        {col.label}
-                        {sortKey === col.key && (
+                        {(col as any).label}
+                        {sortKey === (col as any).key && (
                             <span className="ml-1 text-sm">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                         )}
                     </div>
                 </th>
             ))}
+            {/* Yozuv o'zgartirildi */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                Harakatlar
             </th>
         </tr>
         </thead>

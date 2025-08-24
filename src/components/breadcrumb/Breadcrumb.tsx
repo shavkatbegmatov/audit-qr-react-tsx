@@ -1,7 +1,7 @@
 // src/components/breadcrumb/Breadcrumb.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { findBreadcrumbTrail } from '@/utils/routeUtils';
+import { findBreadcrumbTrail } from '@/utils/routeUtils'; // Yordamchi funksiyani import qilamiz
 
 const Breadcrumb: React.FC = () => {
     const location = useLocation();

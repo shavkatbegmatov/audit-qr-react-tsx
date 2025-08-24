@@ -1,3 +1,5 @@
+// src/types/AuthTypes.ts
+
 export interface TokenResponse {
     success: boolean;
     data?: {

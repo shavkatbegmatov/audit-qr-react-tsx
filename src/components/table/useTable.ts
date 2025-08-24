@@ -3,14 +3,35 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '@/services/api';
 import React from 'react';
 
-export type Column<T> = {
+// --- BOSHLANISHI: QAYTA TUZATILGAN QISM ---
+
+// Ma'lumotlar ustunlari uchun tip. `render` funksiyasi `row` parametrini ham qabul qilishi mumkin.
+type DataColumn<T> = {
     [K in keyof T]: {
         key: K;
         label: string;
         sortable?: boolean;
-        render?: (value: T[K]) => React.ReactNode;
+        width?: string;
+        align?: 'left' | 'center' | 'right';
+        render?: (value: T[K], row: T) => React.ReactNode;
     }
 }[keyof T];
+
+// Maxsus ustunlar uchun tip (masalan, 'actions').
+// `key` har qanday `string` bo'lishi mumkin va `render` funksiyasi butun qatorni (`row`) qabul qilishi shart.
+type CustomColumn<T> = {
+    key: string;
+    label: string;
+    sortable?: false;
+    width?: string;
+    align?: 'left' | 'center' | 'right';
+    render: (_value: any, row: T) => React.ReactNode;
+};
+
+// Yakuniy 'Column' tipi ikkala ustun turini ham qamrab oladi.
+export type Column<T> = DataColumn<T> | CustomColumn<T>;
+
+// --- TUGASHI: QAYTA TUZATILGAN QISM ---
 
 export interface TableParams<T> {
     apiUrl: string;
@@ -33,9 +54,9 @@ export default function useTable<T extends {
     id: number;
     parentId?: number | null
 }>({
-    apiUrl,
-    pageSize = 10
-}: TableParams<T>) {
+       apiUrl,
+       pageSize = 10
+   }: TableParams<T>) {
     const [data, setData] = useState<T[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -49,7 +70,7 @@ export default function useTable<T extends {
         setLoading(true);
         try {
             const params: Record<string, unknown> = {
-                page: page - 1,  // Spring Boot Pageable: zero-based
+                page: page - 1,
                 size: pageSize,
                 q: search,
                 ...filters,
@@ -106,7 +127,6 @@ export default function useTable<T extends {
         void fetchData();
     }, [fetchData]);
 
-    // CRUD ops
     const createItem = async (item: Partial<T>) => {
         await api.post(apiUrl, item);
         await fetchData();
@@ -122,7 +142,6 @@ export default function useTable<T extends {
         await fetchData();
     };
 
-    // Handlers
     const onSearch = (q: string) => { setSearch(q); setPage(1); };
     const onFilter = (f: Record<string, unknown>) => { setFilters(f); setPage(1); };
     const onSort = (key: keyof T) => {

@@ -1,11 +1,10 @@
-// src/components/layout/MainLayout.tsx
 import { type ReactNode, useState, Suspense } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/context/auth-context";
 
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
-import Breadcrumb from '@/components/breadcrumb/Breadcrumb'; // New import for breadcrumb
+import Breadcrumb from '@/components/breadcrumb/Breadcrumb';
 
 interface MainLayoutProps {
     children?: ReactNode;
@@ -14,24 +13,38 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
     const { isAuthenticated } = useAuth();
     const location = useLocation();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default open
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     return (
-        <div className="flex min-h-screen bg-gray-100 transition-colors duration-300">
+        <div className="flex h-screen bg-gray-100">
+            {/* Fixed Sidebar */}
             <Sidebar isOpen={isSidebarOpen} />
-            <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
+
+            {/* Right content area */}
+            <div
+                className={`flex flex-col flex-1 min-w-0 transition-[margin] duration-300 ${
+                    isSidebarOpen ? 'ml-[280px]' : 'ml-0'
+                }`}
+            >
+                {/* Sticky Topbar */}
                 <Topbar
                     onMenuClick={() => setIsSidebarOpen((prev) => !prev)}
                     isSidebarOpen={isSidebarOpen}
                 />
-                <Breadcrumb /> {/* Added breadcrumb here, below topbar */}
-                <main className="p-8 bg-white flex-1 shadow-inner transition-all duration-300 hover:shadow-md">
+
+                {/* Optional: sticky breadcrumb */}
+                <div className="sticky top-16 z-30 bg-gray-100/80 backdrop-blur">
+                    <Breadcrumb />
+                </div>
+
+                {/* Scrollable main */}
+                <main className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
                     {children}
-                    <Suspense fallback={<div className="flex items-center justify-center h-screen bg-gray-100">Loading...</div>}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-40 text-gray-500">Yuklanmoqda...</div>}>
                         <Outlet />
                     </Suspense>
                 </main>

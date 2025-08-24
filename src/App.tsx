@@ -28,6 +28,7 @@ const LazyTier3RiskTypesPage = lazy(() => import('@/pages/Tier3RiskTypesPage'));
 const LazyAuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
 const LazyRolesPage = lazy(() => import('@/pages/RolesPage'));
 const LazyUsersPage = lazy(() => import('@/pages/UsersPage'));
+const LazyAuditorsPage = lazy(() => import('@/pages/AuditorsPage'));
 
 function App() {
     return (
@@ -69,6 +70,7 @@ function App() {
                                             path={ROUTES.SUBJECT_SECTIONS}
                                             element={<LazySubjectSectionsPage />}
                                         />
+                                        <Route path={ROUTES.AUDITORS} element={<LazyAuditorsPage />} />
                                         <Route
                                             path={ROUTES.RISK_REGISTRY}
                                             element={<LazyRiskRegistryPage />}
