@@ -14,5 +14,5 @@ export interface AuditLog {
     timestamp: string; // OffsetDateTime string formatida
     ipAddress: string;
     outcome: boolean;
-    details: string | null;
+    details: string | undefined;
 }

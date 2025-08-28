@@ -13,101 +13,126 @@ interface WebSocketProviderProps {
     children: React.ReactNode;
 }
 
+interface OnlineUser {
+    username: string;
+    onlineSince: string;
+    currentPage: string;
+}
+
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const location = useLocation();
-    const [onlineUsers, setOnlineUsers] = useState<{ username: string; onlineSince: string; currentPage: string; }[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [error, setError] = useState<string | null>(null);
     const clientRef = useRef<Client | null>(null);
-    const subscribedRef = useRef<boolean>(false);
+    const reconnectAttemptRef = useRef<number>(0);
+    const maxReconnectAttempts = 5; // Qayta ulanish urinishlarini biroz ko'paytirish
+    const mountedRef = useRef<boolean>(true);
 
     const fetchInitialLogs = useCallback(async () => {
-        if (!isAuthenticated) return;
-        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        if (!token) {
-            setError('Token topilmadi');
-            return;
-        }
-
+        if (!isAuthenticated || !mountedRef.current) return;
         try {
-            const response = await api.get('audit-logs', { // Updated to match backend path
+            const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+            if (!token) return;
+
+            const response = await api.get('audit-logs', {
                 headers: { Authorization: `Bearer ${token}` },
-                params: {
-                    page: 0,
-                    size: 50,
-                    sort: 'timestamp,desc',
-                },
+                params: { page: 0, size: 50, sort: 'timestamp,desc' },
             });
 
-            if (response.data.success && Array.isArray(response.data.data.content)) {
+            if (response.data.success && Array.isArray(response.data.data.content) && mountedRef.current) {
                 setLogs(response.data.data.content);
-            } else {
-                console.warn('Initial logs fetch failed: invalid response');
-                setError('Loglarni yuklashda xato: Noto‘g‘ri javob formati');
             }
         } catch (err) {
-            console.error('Failed to fetch initial logs:', err);
-            setError('Initial loglarni yuklashda xato: ' + (err as Error).message);
+            console.error('[Dev] Loglarni yuklashda xato:', err);
+            if ((err as any)?.response?.status === 401 && mountedRef.current) {
+                setError('Sessiya tugadi - qayta kiring');
+            }
         }
     }, [isAuthenticated]);
 
+    // IZOH: Ulanish va obuna mantig'ini alohida funksiyaga ajratdik, bu kodni toza saqlaydi.
+    const subscribeToTopics = (client: Client) => {
+        // Online users uchun obuna
+        client.subscribe('/topic/online-users', (message) => {
+            if (!mountedRef.current) return;
+            try {
+                const users: OnlineUser[] = JSON.parse(message.body);
+                setOnlineUsers(users);
+            } catch (parseError) {
+                console.error('[Dev] Online users parse error:', parseError);
+            }
+        });
+
+        // Loglar uchun obuna
+        client.subscribe('/topic/logs', (message) => {
+            if (!mountedRef.current) return;
+            try {
+                const log: AuditLog = JSON.parse(message.body);
+                setLogs((prevLogs) => [log, ...prevLogs.slice(0, 49)]);
+            } catch (parseError) {
+                console.error('[Dev] Logs parse error:', parseError);
+            }
+        });
+
+        // IZOH: Ulanish o'rnatilgach, back-end'dan joriy online foydalanuvchilar ro'yxatini so'raymiz.
+        // Bu foydalanuvchi birinchi marta kirganda to'liq ro'yxatni olishini kafolatlaydi.
+        client.publish({ destination: '/app/get-online-users' });
+
+        // IZOH: Shuningdek, o'zining joriy sahifasi haqida darhol xabar beradi.
+        // Bu uning o'zini ham ro'yxatda to'g'ri ko'rinishini ta'minlaydi.
+        const username = localStorage.getItem('username');
+        if (username) {
+            client.publish({
+                destination: '/app/update-page',
+                body: JSON.stringify({ username, page: location.pathname }),
+            });
+        }
+    };
+
     const connectWebSocket = useCallback(() => {
-        if (!isAuthenticated) {
-            setError('Autentikatsiya talab qilinadi');
+        if (!isAuthenticated || (clientRef.current && clientRef.current.active)) {
             return;
         }
 
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         if (!token) {
-            setError('Token topilmadi');
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('[Dev] Token mavjud emas - WebSocket ulanishi mumkin emas');
+            }
             return;
         }
 
-        if (clientRef.current) {
-            clientRef.current.deactivate();
-            clientRef.current = null;
-            subscribedRef.current = false;
-        }
-
         const stompClient = new Client({
-            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}${API_ENDPOINTS.WS_LOGS}?access_token=${token}`),
+            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_BASE_API_URL}${API_ENDPOINTS.WS_LOGS}`),
             connectHeaders: { Authorization: `Bearer ${token}` },
             reconnectDelay: 5000,
-            onConnect: () => {
-                console.log('WebSocket ulandi');
-                subscribedRef.current = false;
-                stompClient.subscribe('/topic/online-users', (message) => {
-                    const users: { username: string; onlineSince: string; currentPage: string; }[] = JSON.parse(message.body);
-                    console.log('Online users received:', users);
-                    setOnlineUsers(users);
-                });
-                stompClient.subscribe('/topic/logs', (message) => {
-                    const log: AuditLog = JSON.parse(message.body);
-                    setLogs((prevLogs) => [...prevLogs, log]);
-                });
-                subscribedRef.current = true;
+            heartbeatIncoming: 4000,
+            heartbeatOutgoing: 4000,
 
-                const storedUsername = localStorage.getItem('username');
-                if (storedUsername) {
-                    stompClient.publish({
-                        destination: '/app/update-page',
-                        body: JSON.stringify({ username: storedUsername, page: location.pathname }),
-                    });
-                    console.log('Update page published after connect:', location.pathname);
-                }
+            onConnect: () => {
+                if (!mountedRef.current) return;
+                console.log('[Dev] WebSocket muvaffaqiyatli ulandi');
+                setError(null);
+                reconnectAttemptRef.current = 0;
+                subscribeToTopics(stompClient);
             },
             onStompError: (frame) => {
-                setError(`Xato: ${frame.body}`);
-                console.error('WebSocket error:', frame.body);
-                if (clientRef.current) {
-                    clientRef.current.deactivate();
-                    clientRef.current = null;
-                    subscribedRef.current = false;
+                if (!mountedRef.current) return;
+                console.error('[Dev] WebSocket STOMP xatosi:', frame.body);
+                setError('Ulanishda muammo yuz berdi. Qayta urinilmoqda...');
+
+                reconnectAttemptRef.current++;
+                if (reconnectAttemptRef.current >= maxReconnectAttempts) {
+                    setError('Ulanishda jiddiy muammo. Iltimos, sahifani yangilang.');
+                    stompClient.deactivate();
                 }
             },
             onDisconnect: () => {
-                subscribedRef.current = false;
+                if (!mountedRef.current) return;
+                console.log('[Dev] WebSocket uzildi');
+                setOnlineUsers([]); // Ulanish uzilganda ro'yxatni tozalash
             },
         });
 
@@ -115,88 +140,52 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         clientRef.current = stompClient;
     }, [isAuthenticated, location.pathname]);
 
+    // Component mount/unmount holatini kuzatish
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
+
+    // Asosiy ulanish effekti
     useEffect(() => {
         if (isAuthenticated) {
             fetchInitialLogs();
             connectWebSocket();
-        } else if (clientRef.current) {
-            clientRef.current.deactivate();
-            clientRef.current = null;
-            subscribedRef.current = false;
-            setOnlineUsers([]);
-            setLogs([]);
-            setError(null);
-        }
-
-        return () => {
+        } else {
             if (clientRef.current) {
                 clientRef.current.deactivate();
                 clientRef.current = null;
-                subscribedRef.current = false;
+            }
+            if (mountedRef.current) {
+                setOnlineUsers([]);
+                setLogs([]);
+                setError(null);
+            }
+        }
+
+        return () => {
+            if (clientRef.current?.active) {
+                clientRef.current.deactivate();
+                clientRef.current = null;
             }
         };
     }, [isAuthenticated, connectWebSocket, fetchInitialLogs]);
 
+    // Sahifa o'zgarishini kuzatish effekti
     useEffect(() => {
-        if (clientRef.current && clientRef.current.active && subscribedRef.current) {
+        // IZOH: Sahifa o'zgarishi endi faqat ulanish aktiv bo'lganda yuboriladi.
+        if (clientRef.current?.active && isAuthenticated) {
             const username = localStorage.getItem('username');
             if (username) {
                 clientRef.current.publish({
                     destination: '/app/update-page',
                     body: JSON.stringify({ username, page: location.pathname }),
                 });
-                console.log('Page changed, update published:', location.pathname);
             }
-        } else {
-            connectWebSocket();
         }
-    }, [location.pathname, connectWebSocket]);
-
-    useEffect(() => {
-        const handleTokenChange = (event: StorageEvent) => {
-            if (event.key === STORAGE_KEYS.ACCESS_TOKEN || event.key === STORAGE_KEYS.REFRESH_TOKEN) {
-                if (clientRef.current) {
-                    clientRef.current.deactivate();
-                    clientRef.current = null;
-                    subscribedRef.current = false;
-                }
-                if (isAuthenticated) {
-                    connectWebSocket();
-                } else {
-                    setError('Token yo‘qolgan – ulanish uzildi');
-                }
-            }
-        };
-        window.addEventListener('storage', handleTokenChange);
-
-        const tokenCheckInterval = setInterval(() => {
-            if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
-                if (clientRef.current) {
-                    clientRef.current.deactivate();
-                    clientRef.current = null;
-                    subscribedRef.current = false;
-                }
-                setError('Token yo‘qolgan – ulanish uzildi');
-            }
-        }, 5000);
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                if (!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)) {
-                    setError('Token yo‘qolgan – ulanish uzildi');
-                } else if (isAuthenticated) {
-                    connectWebSocket();
-                }
-            }
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            window.removeEventListener('storage', handleTokenChange);
-            clearInterval(tokenCheckInterval);
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, [isAuthenticated, connectWebSocket]);
+    }, [location.pathname, isAuthenticated]); // isAuthenticated'ni dependency'ga qo'shdik
 
     const value = { onlineUsers, logs, error };
 

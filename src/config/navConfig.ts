@@ -38,19 +38,36 @@ export const navItems: NavItem[] = [
             },
             { label: 'Tarkibiy tuzilmalar', route: ROUTES.ORG_STRUCTURE },
             { label: 'Obyekt bo\'limlari', route: ROUTES.SUBJECT_SECTIONS },
-            // ... boshqa eski menyular
         ]
     },
     { label: 'Audit Loglari', route: ROUTES.AUDIT_LOGS, icon: FaTh },
     {
         label: 'Xavfsizlik',
-        route: '/security',
+        route: ROUTES.USERS_MANAGEMENT, // Yangi birlashtirilgan sahifa default route
         icon: FaCogs,
         subItems: [
-            { label: 'Foydalanuvchilar', route: ROUTES.USERS, icon: FaUsers },
-            { label: 'Rollar', route: ROUTES.ROLES, icon: FaKey },
-            // YANGILANGAN VA KO'CHIRILGAN:
-            { label: 'Auditorlar', route: ROUTES.AUDITORS, icon: FaUserShield },
+            {
+                label: 'Foydalanuvchilar boshqaruvi', // Yangi birlashtirilgan sahifa
+                route: ROUTES.USERS_MANAGEMENT,
+                icon: FaUsers,
+            },
+            {
+                label: 'Rollar',
+                route: ROUTES.ROLES,
+                icon: FaKey
+            },
+            // Eski alohida sahifalar - backward compatibility uchun (ixtiyoriy)
+            // Agar kerak bo'lmasa, bu qatorlarni o'chirib tashlang
+            // {
+            //     label: 'Foydalanuvchilar (eski)',
+            //     route: ROUTES.USERS,
+            //     icon: FaUsers
+            // },
+            // {
+            //     label: 'Auditorlar (eski)',
+            //     route: ROUTES.AUDITORS,
+            //     icon: FaUserShield
+            // },
         ]
     },
 ];

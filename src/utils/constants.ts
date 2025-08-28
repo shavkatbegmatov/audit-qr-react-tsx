@@ -37,13 +37,17 @@ export const ROUTES = {
     // Audit loglari
     AUDIT_LOGS: '/audit-logs',
 
-    // Xavfsizlik
-    USERS: '/users',
+    // Xavfsizlik - Birlashtirilgan sahifa
+    USERS_MANAGEMENT: '/users-management', // Yangi birlashtirilgan sahifa
+    USERS: '/users', // Eski alohida sahifa (deprecated)
     ROLES: '/roles',
-    AUDITORS: '/auditors', // <-- QO'SHILDI
-    AUDITORS_CREATE: '/auditors/create', // <-- QO'SHILDI
-    AUDITOR_DETAIL: '/auditors/:id', // <-- QO'SHILDI (dinamik marshrut)
+    AUDITORS: '/auditors', // Eski alohida sahifa (deprecated)
+    AUDITORS_CREATE: '/auditors/create',
+    AUDITOR_DETAIL: '/auditors/:id',
 
     // Wildcard
     WILDCARD: '*',
 } as const;
+
+// Route tiplarini export qilish
+export type RouteKeys = keyof typeof ROUTES;

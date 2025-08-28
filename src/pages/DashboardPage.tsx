@@ -1,5 +1,6 @@
 import React, { useMemo, type ReactElement, type ComponentType } from "react";
 import OnlineUsers from "@/components/OnlineUsers";
+import { useWebSocketContext } from "@/context/WebSocketEventContext";
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend,
     PieChart, Pie, Cell, Sector
@@ -11,7 +12,10 @@ import {
     FaClipboardList,
     FaSignInAlt,
     FaExclamationTriangle,
+    FaUserCheck,
+    FaWifi,
 } from "react-icons/fa";
+import { BsWifiOff } from "react-icons/bs";
 
 /* Types */
 type IconType = ComponentType<{ className?: string }>;
@@ -27,14 +31,23 @@ interface WeeklyActivity { day: string; logins: number; audits: number; }
 interface RoleSlice { name: string; value: number; color: string; }
 interface ActivityItem { id: number; user: string; action: string; time: string; }
 
-/* Demo data */
-const statsData: StatCardData[] = [
-    { name: "Aktiv Foydalanuvchilar", value: 1250, deltaLabel: "+15.2%", isPositive: true, Icon: FaUsers, colorClass: "bg-blue-500" },
-    { name: "Audit Obyektlari", value: 320, deltaLabel: "+5", isPositive: true, Icon: FaClipboardList, colorClass: "bg-indigo-500" },
-    { name: "Mavjud Rollar", value: 4, deltaLabel: "+1", isPositive: true, Icon: FaShieldAlt, colorClass: "bg-purple-500" },
-    { name: "Tizimga Kirishlar (24s)", value: 4812, deltaLabel: "+8.7%", isPositive: true, Icon: FaSignInAlt, colorClass: "bg-green-500" },
-    { name: "Risklar Soni", value: 89, deltaLabel: "-3.1%", isPositive: false, Icon: FaExclamationTriangle, colorClass: "bg-red-500" },
+/* Static data */
+const staticStatsData: Omit<StatCardData, 'value'>[] = [
+    { name: "Aktiv Foydalanuvchilar", deltaLabel: "+15.2%", isPositive: true, Icon: FaUsers, colorClass: "bg-blue-500" },
+    { name: "Hozir Online", deltaLabel: "live", isPositive: true, Icon: FaUserCheck, colorClass: "bg-green-500" },
+    { name: "Audit Obyektlari", deltaLabel: "+5", isPositive: true, Icon: FaClipboardList, colorClass: "bg-indigo-500" },
+    { name: "Mavjud Rollar", deltaLabel: "+1", isPositive: true, Icon: FaShieldAlt, colorClass: "bg-purple-500" },
+    { name: "Tizimga Kirishlar (24s)", deltaLabel: "+8.7%", isPositive: true, Icon: FaSignInAlt, colorClass: "bg-cyan-500" },
+    { name: "Risklar Soni", deltaLabel: "-3.1%", isPositive: false, Icon: FaExclamationTriangle, colorClass: "bg-red-500" },
 ];
+
+const staticValues = {
+    "Aktiv Foydalanuvchilar": 1250,
+    "Audit Obyektlari": 320,
+    "Mavjud Rollar": 4,
+    "Tizimga Kirishlar (24s)": 4812,
+    "Risklar Soni": 89,
+};
 
 const weeklyActivityData: WeeklyActivity[] = [
     { day: "Dushanba", logins: 400, audits: 24 },
@@ -60,7 +73,7 @@ const recentActivities: ActivityItem[] = [
     { id: 4, user: "Sardor Komilov", action: "hisobotni eksport qildi", time: "kecha, 18:30" },
 ];
 
-/* Helpers */
+/* Helper functions */
 function renderActiveShape(props: unknown): ReactElement {
     const {
         cx = 0,
@@ -74,7 +87,6 @@ function renderActiveShape(props: unknown): ReactElement {
         payload,
     } = props as PieSectorDataItem;
 
-    // Ensure payload is of type RoleSlice
     const typedPayload = payload as RoleSlice;
 
     return (
@@ -98,7 +110,11 @@ function renderActiveShape(props: unknown): ReactElement {
     );
 }
 
-function StatCard({ data, format }: { data: StatCardData; format: (n: number) => string }) {
+function StatCard({ data, format, connectionIcon }: {
+    data: StatCardData;
+    format: (n: number) => string;
+    connectionIcon?: ReactElement;
+}) {
     const { Icon } = data;
     return (
         <div className="bg-white p-5 rounded-xl shadow-sm ring-1 ring-gray-100 h-full flex items-center gap-5" role="region" aria-label={data.name}>
@@ -106,9 +122,14 @@ function StatCard({ data, format }: { data: StatCardData; format: (n: number) =>
                 <Icon className="h-7 w-7" />
             </div>
             <div>
-                <p className="text-sm text-gray-500">{data.name}</p>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                    {data.name}
+                    {connectionIcon}
+                </p>
                 <p className="text-2xl font-bold text-gray-900">{format(data.value)}</p>
-                <p className={`text-xs font-medium ${data.isPositive ? "text-green-600" : "text-red-600"}`}>{data.deltaLabel}</p>
+                <p className={`text-xs font-medium ${data.isPositive ? "text-green-600" : "text-red-600"}`}>
+                    {data.deltaLabel}
+                </p>
             </div>
         </div>
     );
@@ -123,18 +144,43 @@ function Card({ title, children, className = "" }: { title: string; children: Re
     );
 }
 
-/* Page */
+/* Main Dashboard Component */
 export default function DashboardPage() {
     const nf = useMemo(() => new Intl.NumberFormat("uz-UZ"), []);
     const formatNumber = (n: number) => nf.format(n);
 
+    // WebSocket context'dan online users ma'lumotlarini olish
+    const { onlineCount, isConnected } = useWebSocketContext();
+
+    // Stats data'ni dynamic qilish
+    const statsData: StatCardData[] = useMemo(() => {
+        return staticStatsData.map(stat => ({
+            ...stat,
+            value: stat.name === "Hozir Online" ? onlineCount : staticValues[stat.name as keyof typeof staticValues] || 0
+        }));
+    }, [onlineCount]);
+
+    // Connection status icon
+    const getConnectionIcon = (statName: string) => {
+        if (statName === "Hozir Online") {
+            return isConnected ?
+                <FaWifi className="w-3 h-3 text-green-500" title="Connected" /> :
+                <BsWifiOff className="w-3 h-3 text-red-500" title="Disconnected" />;
+        }
+        return undefined;
+    };
+
     return (
         <div className="px-3 sm:px-4 lg:px-6 pb-8">
-            {/* 5 ta karta — bitta qatorda (≥ lg) */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 auto-rows-[minmax(0,1fr)] mb-6">
+            {/* Stats cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 sm:gap-6 auto-rows-[minmax(0,1fr)] mb-6">
                 {statsData.map((stat) => (
                     <div key={stat.name} className="col-span-1">
-                        <StatCard data={stat} format={formatNumber} />
+                        <StatCard
+                            data={stat}
+                            format={formatNumber}
+                            connectionIcon={getConnectionIcon(stat.name)}
+                        />
                     </div>
                 ))}
             </div>
@@ -200,7 +246,7 @@ export default function DashboardPage() {
                     <Card title="So'nggi harakatlar" className="min-h-[280px]">
                         <ul className="space-y-4 overflow-auto">
                             {recentActivities.map((a) => (
-                                <li key={a.id} className="flex items-center gap-4 p-2 rounded-md hover:bg-gray-50" aria-label={`${a.user} — ${a.action}`}>
+                                <li key={a.id} className="flex items-center gap-4 p-2 rounded-md hover:bg-gray-50" aria-label={`${a.user} – ${a.action}`}>
                                     <div className="p-2 bg-gray-100 rounded-full" aria-hidden="true">
                                         <FaUsers className="text-gray-500" />
                                     </div>

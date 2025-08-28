@@ -3,7 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense, lazy } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/context/AuthProvider';
-import { WebSocketProvider } from '@/context/WebSocketProvider';
+import { WebSocketEventProvider } from '@/context/WebSocketEventContext';
 import SidebarProvider from '@/context/SidebarContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -12,6 +12,7 @@ import ErrorFallback from '@/components/ErrorFallback';
 import { ROUTES } from '@/utils/constants';
 import NotFound from '@/pages/NotFound';
 
+// Lazy loaded pages
 const LazyLoginPage = lazy(() => import('@/pages/LoginPage'));
 const LazyDashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const LazyReferencePage = lazy(() => import('@/pages/ReferencePage'));
@@ -27,6 +28,11 @@ const LazyTier2RiskTypesPage = lazy(() => import('@/pages/Tier2RiskTypesPage'));
 const LazyTier3RiskTypesPage = lazy(() => import('@/pages/Tier3RiskTypesPage'));
 const LazyAuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
 const LazyRolesPage = lazy(() => import('@/pages/RolesPage'));
+
+// Yangi birlashtirilgan sahifa
+const LazyUsersManagementPage = lazy(() => import('@/pages/UsersManagementPage'));
+
+// Eski sahifalar (deprecated, backward compatibility uchun)
 const LazyUsersPage = lazy(() => import('@/pages/UsersPage'));
 const LazyAuditorsPage = lazy(() => import('@/pages/AuditorsPage'));
 
@@ -34,80 +40,51 @@ function App() {
     return (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
             <AuthProvider>
-                <WebSocketProvider>
+                {/* WebSocket Event Provider - Auth provider ichida */}
+                <WebSocketEventProvider>
                     <SidebarProvider>
                         <Suspense fallback={<LoadingFallback />}>
                             <Routes>
+                                {/* Public routes */}
                                 <Route path={ROUTES.LOGIN} element={<LazyLoginPage />} />
+
+                                {/* Protected routes */}
                                 <Route element={<ProtectedRoute />}>
                                     <Route element={<MainLayout />}>
                                         <Route path={ROUTES.ROOT} element={<LazyDashboardPage />} />
-                                        <Route
-                                            path={ROUTES.REFERENCE}
-                                            element={<LazyReferencePage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.AUDIT_OBJECT_TYPES}
-                                            element={<LazyAuditObjectTypesPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS}
-                                            element={<LazyAuditObjectBranchNetworkPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.AUDIT_OBJECTS}
-                                            element={<LazyAuditObjectPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.BLOCK}
-                                            element={<LazyBlockPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.ORG_STRUCTURE}
-                                            element={<LazyOrgStructurePage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.SUBJECT_SECTIONS}
-                                            element={<LazySubjectSectionsPage />}
-                                        />
+                                        <Route path={ROUTES.REFERENCE} element={<LazyReferencePage />} />
+                                        <Route path={ROUTES.AUDIT_OBJECT_TYPES} element={<LazyAuditObjectTypesPage />} />
+                                        <Route path={ROUTES.AUDIT_OBJECT_BRANCH_NETWORKS} element={<LazyAuditObjectBranchNetworkPage />} />
+                                        <Route path={ROUTES.AUDIT_OBJECTS} element={<LazyAuditObjectPage />} />
+                                        <Route path={ROUTES.BLOCK} element={<LazyBlockPage />} />
+                                        <Route path={ROUTES.ORG_STRUCTURE} element={<LazyOrgStructurePage />} />
+                                        <Route path={ROUTES.SUBJECT_SECTIONS} element={<LazySubjectSectionsPage />} />
+                                        <Route path={ROUTES.RISK_REGISTRY} element={<LazyRiskRegistryPage />} />
+                                        <Route path={ROUTES.TIER_1_RISK_TYPES} element={<LazyTier1RiskTypesPage />} />
+                                        <Route path={ROUTES.TIER_2_RISK_TYPES} element={<LazyTier2RiskTypesPage />} />
+                                        <Route path={ROUTES.TIER_3_RISK_TYPES} element={<LazyTier3RiskTypesPage />} />
+                                        <Route path={ROUTES.AUDIT_LOGS} element={<LazyAuditLogsPage />} />
+                                        <Route path={ROUTES.ROLES} element={<LazyRolesPage />} />
+
+                                        {/* Yangi birlashtirilgan sahifa */}
+                                        <Route path={ROUTES.USERS_MANAGEMENT} element={<LazyUsersManagementPage />} />
+
+                                        {/* Eski sahifalar - backward compatibility uchun */}
+                                        <Route path={ROUTES.USERS} element={<LazyUsersPage />} />
                                         <Route path={ROUTES.AUDITORS} element={<LazyAuditorsPage />} />
-                                        <Route
-                                            path={ROUTES.RISK_REGISTRY}
-                                            element={<LazyRiskRegistryPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.TIER_1_RISK_TYPES}
-                                            element={<LazyTier1RiskTypesPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.TIER_2_RISK_TYPES}
-                                            element={<LazyTier2RiskTypesPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.TIER_3_RISK_TYPES}
-                                            element={<LazyTier3RiskTypesPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.AUDIT_LOGS}
-                                            element={<LazyAuditLogsPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.ROLES}
-                                            element={<LazyRolesPage />}
-                                        />
-                                        <Route
-                                            path={ROUTES.USERS}
-                                            element={<LazyUsersPage />}
-                                        />
-                                        {/* Add sub-routes here as needed */}
+
+                                        {/* Dynamic routes */}
+                                        <Route path={ROUTES.AUDITOR_DETAIL} element={<div>Auditor Detail Page</div>} />
+
                                         <Route path="*" element={<NotFound />} />
                                     </Route>
                                 </Route>
-                                <Route
-                                    path={ROUTES.WILDCARD}
-                                    element={<Navigate to={ROUTES.LOGIN} replace />}
-                                />
+
+                                {/* Catch-all redirect */}
+                                <Route path={ROUTES.WILDCARD} element={<Navigate to={ROUTES.LOGIN} replace />} />
                             </Routes>
+
+                            {/* Toast notifications */}
                             <Toaster
                                 position="top-center"
                                 reverseOrder={false}
@@ -134,7 +111,7 @@ function App() {
                             />
                         </Suspense>
                     </SidebarProvider>
-                </WebSocketProvider>
+                </WebSocketEventProvider>
             </AuthProvider>
         </ErrorBoundary>
     );
