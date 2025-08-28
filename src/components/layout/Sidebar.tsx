@@ -2,7 +2,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useLayoutEffect, memo, useMemo } from "react";
 import { FaAngleRight } from "react-icons/fa";
-import logoImage from "@/assets/brb_logo_with_name_white.png";
 
 import { useSidebar } from "@/context/SidebarContext";
 import { navItems, type NavItem } from "@/config/navConfig";
@@ -31,6 +30,7 @@ function findParentsForRoute(
     return directParent ? [...currentParents, directParent.label] : [];
 }
 
+
 interface SidebarProps {
     isOpen: boolean;
 }
@@ -57,40 +57,51 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     );
 
     return (
-        <nav
-            className={`fixed top-0 left-0 h-full w-[280px] bg-[#1b1a1b] text-white overflow-y-auto transition-transform duration-300 ease-out ${
+        <aside
+            className={`fixed top-0 left-0 h-full w-[280px] bg-white shadow-md flex flex-col transition-transform duration-300 ease-out ${
                 isOpen ? "translate-x-0" : "-translate-x-full"
-            } [&::-webkit-scrollbar]:w-0`}
+            }`}
             aria-label="Asosiy navigatsiya"
         >
-            {/* Header: logo + title vertikal markazda */}
-            <header className="bg-[#33363a] sticky top-0 z-10 h-28 p-0 m-0 flex flex-col items-center justify-center">
-                <img
-                    src={logoImage}
-                    alt="AuditQR logo"
-                    className="w-[200px] block mx-auto"
-                />
-                <h1 className="text-center font-medium text-[25px] leading-tight font-sans tracking-[2px] text-red-500 m-0 mt-2">
-                    AuditQR
-                </h1>
+            {/* Header: Topbar bilan bir xil balandlikda */}
+            <header className="h-16 flex items-center px-4 border-b">
+                <div className="text-xl font-bold text-gray-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-indigo-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span>AuditQR</span>
+                </div>
             </header>
 
             {/* Menu */}
-            <div className="menu w-full mt-[18px]">{memoizedNav}</div>
-        </nav>
+            <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+                {memoizedNav}
+            </nav>
+
+            {/* Footer: Foydalanuvchi profili */}
+            <footer className="p-4 border-t">
+                <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-semibold">
+                        JD
+                    </div>
+                    <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-800">John Doe</p>
+                        <p className="text-xs text-gray-500">Senior Auditor</p>
+                    </div>
+                </div>
+            </footer>
+        </aside>
     );
 }
 
 interface SidebarItemProps {
     item: NavItem;
     level?: number;
-    isParentOpen?: boolean;
 }
 
 const SidebarItem = memo(function SidebarItem({
                                                   item,
                                                   level = 0,
-                                                  isParentOpen = false,
                                               }: SidebarItemProps) {
     const { openedSubMenus, toggleSubMenu } = useSidebar();
     const location = useLocation();
@@ -101,90 +112,50 @@ const SidebarItem = memo(function SidebarItem({
             navItem.subItems?.some(
                 (sub) => location.pathname === sub.route || isAnySubItemActive(sub)
             ) || false;
-
         return location.pathname === item.route || isAnySubItemActive(item);
     }, [location.pathname, item]);
 
     const isSubOpen = openedSubMenus.includes(item.label);
-
-    const indent = level * 20;
-    const basePadding = 25;
-
-    const connectingLines =
-        level > 0 ? (
-            <>
-        <span
-            className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#2b2b2c]"
-            aria-hidden="true"
-        />
-                <span
-                    className="absolute left-0 top-[20px] w-[14px] h-[2px] bg-[#2b2b2c]"
-                    aria-hidden="true"
-                />
-            </>
-        ) : null;
+    const indent = level * 16;
 
     if (item.subItems && item.subItems.length > 0) {
         const handleParentClick = () => {
-            if (location.pathname === item.route) {
-                toggleSubMenu(item.label);
-            } else {
-                if (!isSubOpen) toggleSubMenu(item.label);
+            if (item.route && location.pathname !== item.route) {
                 navigate(item.route);
             }
+            toggleSubMenu(item.label);
         };
 
         return (
             <div>
                 <div
                     onClick={handleParentClick}
-                    style={{ marginLeft: `${indent}px`, paddingLeft: `${basePadding}px` }}
-                    className={`relative py-[6px] pr-[30px] leading-[40px] flex items-center cursor-pointer border-l-4 transition ${
+                    style={{ paddingLeft: `${16 + indent}px` }}
+                    className={`flex items-center py-3 text-sm rounded-md cursor-pointer transition-colors duration-200 ${
                         isParentActive
-                            ? "border-red-500 bg-red-500"
-                            : isParentOpen
-                                ? "border-red-500"
-                                : "border-transparent hover:bg-[#33363a]"
+                            ? 'bg-indigo-50 text-indigo-700'
+                            : 'text-gray-700 hover:bg-gray-100'
                     }`}
                     role="button"
                     aria-expanded={isSubOpen}
-                    aria-controls={`submenu-${item.label}`}
                     title={item.label}
                 >
-                    {connectingLines}
                     {item.icon && (
-                        <item.icon
-                            className={`mr-[10px] ${
-                                isParentActive ? "text-white" : isParentOpen ? "text-red-500" : ""
-                            }`}
-                        />
+                        <item.icon className={`h-5 w-5 mr-3 ${isParentActive ? 'text-indigo-600' : 'text-gray-500'}`} />
                     )}
-                    <span className="flex-1 truncate" title={item.label}>
-            {item.label}
-          </span>
+                    <span className="flex-1 truncate">{item.label}</span>
                     <FaAngleRight
-                        className={`absolute right-[20px] transition-transform duration-300 ${
-                            isSubOpen ? "rotate-90" : ""
-                        }`}
-                        aria-hidden="true"
+                        className={`h-4 w-4 mr-3 transition-transform duration-300 ${isSubOpen ? "rotate-90" : ""}`}
                     />
                 </div>
-
                 <div
-                    id={`submenu-${item.label}`}
                     className={`overflow-hidden transition-all duration-300 ease-in-out ${
                         isSubOpen ? "max-h-[999px]" : "max-h-0"
                     }`}
-                    aria-hidden={!isSubOpen}
                 >
-                    <div className="bg-[#262627]">
+                    <div className="pt-1 space-y-1">
                         {item.subItems.map((sub) => (
-                            <SidebarItem
-                                key={sub.label}
-                                item={sub}
-                                level={level + 1}
-                                isParentOpen={isSubOpen}
-                            />
+                            <SidebarItem key={sub.label} item={sub} level={level + 1} />
                         ))}
                     </div>
                 </div>
@@ -195,21 +166,26 @@ const SidebarItem = memo(function SidebarItem({
     return (
         <NavLink
             to={item.route}
-            style={{ marginLeft: `${indent}px`, paddingLeft: `${basePadding}px` }}
+            style={{ paddingLeft: `${16 + indent}px` }}
             className={({ isActive }) =>
-                `relative text-white text-[15px] no-underline flex items-center leading-[40px] border-l-4 transition ${
-                    isActive || isParentOpen
-                        ? "border-red-500"
-                        : "border-transparent hover:bg-red-600"
-                } ${isActive ? "bg-red-500" : ""}`
+                `flex items-center py-3 text-sm rounded-md transition-colors duration-200 ${
+                    isActive
+                        ? 'bg-indigo-50 text-indigo-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                }`
             }
             title={item.label}
         >
-            {connectingLines}
-            {item.icon && <item.icon className="mr-[10px]" />}
-            <span className="truncate flex-1" title={item.label}>
-        {item.label}
-      </span>
+            {({ isActive }) => (
+                <>
+                    {item.icon && (
+                        <item.icon
+                            className={`h-5 w-5 mr-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`}
+                        />
+                    )}
+                    <span className="truncate flex-1">{item.label}</span>
+                </>
+            )}
         </NavLink>
     );
 });
